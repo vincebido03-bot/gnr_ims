@@ -1,0 +1,11 @@
+.inventory-request-content { max-width: 980px; padding: 28px; }
+.request-card { margin-bottom: 20px; border: 1px solid rgba(255,255,255,.08); border-radius: 14px; padding: 24px; background: #151515; }
+.request-card > span, .requests-heading span { color: #c9a45c; font-size: 11px; font-weight: 700; letter-spacing: 1.6px; }
+.request-card h2, .requests-heading h2 { margin: 8px 0 20px; color: #fff; font-size: 22px; }
+.request-card form { display: grid; gap: 16px; }
+.request-card label { display: grid; gap: 7px; color: #d8d8d8; font-size: 13px; }
+.request-card label span { color: #888; font-size: 11px; }
+.request-card input, .request-card select, .request-card textarea { box-sizing: border-box; width: 100%; border: 1px solid rgba(255,255,255,.1); border-radius: 8px; padding: 11px 12px; background: #202020; color: #fff; font: inherit; }
+.request-card button, .requests-table button { border: 0; border-radius: 7px; padding: 10px 14px; background: #c9a45c; color: #151515; cursor: pointer; font-weight: 700; }
+.request-message { margin-bottom: 18px; border-radius: 8px; padding: 12px; }.request-message.success { background: rgba(111,190,129,.12); color: #8ee0a8; }.request-message.error { background: rgba(220,100,95,.12); color: #ff9c96; }
+.request-list div { padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,.07); }.request-list strong,.request-list small { display:block; }.request-list strong { color:#fff; }.request-list small,.muted { color:#888; font-size:12px; }

@@ -122,12 +122,12 @@
 }
 
 .low-stock {
-    color: #f0b36d !important;
+    color: #ff7770 !important;
     font-weight: 700;
 }
 
 .low-stock small {
-    color: #f0b36d !important;
+    color: #ff7770 !important;
     margin-top: 3px;
 }
 

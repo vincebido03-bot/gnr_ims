@@ -91,6 +91,11 @@ $currentPage = basename($_SERVER["PHP_SELF"]);
             Stock Movement
         </a>
 
+        <a href="inventory-requests.php" class="nav-item <?= $currentPage === 'inventory-requests.php' ? 'active' : '' ?>">
+            <span>📝</span>
+            Inventory Requests
+        </a>
+
 
         <!-- =================================================
              PEOPLE

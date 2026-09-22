@@ -134,6 +134,49 @@ function createNotification(
     return true;
 }
 
+function syncLowStockNotifications()
+{
+    global $pdo;
+
+    $items = $pdo->query("
+        SELECT id, item_code, item_name, current_stock, reorder_level, unit
+        FROM inventory_items
+        WHERE status = 'ACTIVE'
+          AND current_stock <= reorder_level
+    ")->fetchAll();
+
+    $recentAlert = $pdo->prepare("
+        SELECT id
+        FROM notifications
+        WHERE type = 'LOW_STOCK'
+          AND reference_type = 'INVENTORY_ITEM'
+          AND reference_id = ?
+          AND created_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
+        LIMIT 1
+    ");
+
+    foreach ($items as $item) {
+        $recentAlert->execute([(int) $item["id"]]);
+
+        if ($recentAlert->fetchColumn()) {
+            continue;
+        }
+
+        createNotification(
+            "LOW_STOCK",
+            "Low Stock Alert",
+            $item["item_name"] . " (" . $item["item_code"] . ") has " .
+                rtrim(rtrim(number_format((float) $item["current_stock"], 2), "0"), ".") .
+                " " . $item["unit"] . " remaining. Reorder threshold: " .
+                rtrim(rtrim(number_format((float) $item["reorder_level"], 2), "0"), ".") .
+                " " . $item["unit"] . ".",
+            null,
+            "INVENTORY_ITEM",
+            (int) $item["id"]
+        );
+    }
+}
+
 
 /* =========================================================
    FORMATTING HELPERS

@@ -9,7 +9,7 @@
 .jobs-filters button { border-color: #c9a45c; background: #c9a45c; color: #151515; font-weight: 700; cursor: pointer; }
 .jobs-filters a { display: inline-flex; align-items: center; justify-content: center; color: #cfcfcf; text-decoration: none; }
 .jobs-table-wrap { overflow-x: auto; border: 1px solid rgba(255,255,255,.08); border-radius: 14px; background: #151515; }
-.jobs-table { width: 100%; min-width: 1150px; border-collapse: collapse; }
+.jobs-table { width: 100%; min-width: 1250px; border-collapse: collapse; }
 .jobs-table th, .jobs-table td { padding: 16px 18px; border-bottom: 1px solid rgba(255,255,255,.07); color: #d8d8d8; text-align: left; font-size: 13px; vertical-align: top; }
 .jobs-table th { color: #9b9b9b; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; }
 .jobs-table td strong, .jobs-table td small { display: block; }

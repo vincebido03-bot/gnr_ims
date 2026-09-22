@@ -71,6 +71,12 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 
             </a>
 
+            <a href="inventory-request.php"
+                class="employee-nav-item <?php echo $currentPage === 'inventory-request.php' ? 'active' : ''; ?>">
+                <span class="employee-nav-icon">📦</span>
+                <span>Inventory Request</span>
+            </a>
+
         </div>
 
 

@@ -10,11 +10,11 @@ $sql = "
     SELECT r.release_no, r.release_date, r.payment_verified, r.qc_verified,
            r.status, r.remarks, o.order_no, c.customer_no, c.fullname,
            CONCAT(v.brand, ' ', v.model) AS vehicle_name, v.plate_no,
-           CONCAT(e.first_name, ' ', e.last_name) AS released_by_name
+           COALESCE(NULLIF(r.released_by_name, ''), CONCAT(e.first_name, ' ', e.last_name)) AS released_by_name
     FROM releases r
     INNER JOIN orders o ON o.id = r.order_id
     INNER JOIN customers c ON c.id = r.customer_id
-    LEFT JOIN vehicles v ON v.id = r.vehicle_id
+    LEFT JOIN vehicles v ON v.id = COALESCE(r.vehicle_id, o.vehicle_id)
     LEFT JOIN users u ON u.id = r.released_by
     LEFT JOIN employees e ON e.id = u.employee_id
     WHERE 1 = 1
