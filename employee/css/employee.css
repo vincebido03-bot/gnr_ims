@@ -1,0 +1,429 @@
+/* =========================================================
+   EMPLOYEE PORTAL
+   ========================================================= */
+
+:root {
+    --employee-bg: #0b0b0b;
+    --employee-sidebar: #111111;
+    --employee-card: #151515;
+    --employee-card-hover: #1b1b1b;
+    --employee-border: rgba(255, 255, 255, 0.08);
+    --employee-text: #f4f4f4;
+    --employee-muted: #8f8f8f;
+    --employee-gold: #c9a227;
+    --employee-gold-light: #e0bd45;
+    --employee-danger: #d9534f;
+    --employee-sidebar-width: 260px;
+}
+
+
+/* =========================================================
+   RESET
+   ========================================================= */
+
+html,
+body {
+    margin: 0;
+    min-height: 100%;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+body {
+    background: var(--employee-bg);
+    color: var(--employee-text);
+    font-family: Arial, sans-serif;
+}
+
+
+/* =========================================================
+   SIDEBAR
+   ========================================================= */
+
+.employee-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+
+    width: var(--employee-sidebar-width);
+    height: 100vh;
+    min-height: 100vh;
+
+    background: var(--employee-sidebar);
+
+    display: flex;
+    flex-direction: column;
+
+    z-index: 1000;
+    overflow: hidden;
+}
+
+
+/* =========================================================
+   BRAND
+   ========================================================= */
+
+.employee-sidebar-brand {
+    min-height: 90px;
+
+    padding: 20px 22px;
+
+    display: flex;
+    align-items: center;
+    gap: 13px;
+
+    border-bottom: 1px solid var(--employee-border);
+}
+
+
+.employee-brand-mark {
+    width: 43px;
+    height: 43px;
+
+    border: 1px solid var(--employee-gold);
+    border-radius: 10px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    color: var(--employee-gold);
+
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 1px;
+
+    flex-shrink: 0;
+}
+
+
+.employee-brand-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+
+.employee-brand-text strong {
+    color: var(--employee-text);
+
+    font-size: 12px;
+    font-weight: 800;
+
+    letter-spacing: 1.2px;
+    white-space: nowrap;
+}
+
+
+.employee-brand-text span {
+    margin-top: 4px;
+
+    color: var(--employee-gold);
+
+    font-size: 8px;
+    font-weight: 700;
+
+    letter-spacing: 1.5px;
+
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   NAVIGATION
+   ========================================================= */
+
+.employee-nav {
+    flex: 1;
+
+    padding: 25px 14px;
+
+    overflow-y: auto;
+}
+
+
+.employee-nav::-webkit-scrollbar {
+    width: 4px;
+}
+
+
+.employee-nav::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+
+
+.employee-nav-label {
+    padding: 0 12px;
+    margin-bottom: 10px;
+
+    color: #5f5f5f;
+
+    font-size: 9px;
+    font-weight: 800;
+
+    letter-spacing: 1.8px;
+}
+
+
+.employee-nav-label-account {
+    margin-top: 28px;
+}
+
+
+/* =========================================================
+   NAV ITEM
+   ========================================================= */
+
+.employee-nav-item {
+    position: relative;
+
+    min-height: 48px;
+
+    margin-bottom: 6px;
+    padding: 0 13px;
+
+    display: flex;
+    align-items: center;
+    gap: 13px;
+
+    color: var(--employee-muted);
+
+    text-decoration: none;
+
+    border-radius: 10px;
+
+    font-size: 13px;
+    font-weight: 600;
+
+    transition:
+        background 0.25s ease,
+        color 0.25s ease,
+        transform 0.25s ease;
+}
+
+
+.employee-nav-item:hover {
+    background: var(--employee-card-hover);
+    color: var(--employee-text);
+
+    transform: translateX(2px);
+}
+
+
+.employee-nav-item.active {
+    background: rgba(201, 162, 39, 0.12);
+    color: var(--employee-gold-light);
+}
+
+
+.employee-nav-item.active::before {
+    content: "";
+
+    position: absolute;
+
+    left: 0;
+    top: 9px;
+    bottom: 9px;
+
+    width: 3px;
+
+    background: var(--employee-gold);
+
+    border-radius: 0 4px 4px 0;
+}
+
+
+.employee-nav-icon {
+    width: 24px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    color: inherit;
+
+    font-size: 17px;
+    font-weight: 600;
+
+    flex-shrink: 0;
+}
+
+
+/* =========================================================
+   SIDEBAR FOOTER
+   ========================================================= */
+
+.employee-sidebar-footer {
+    padding: 16px 14px;
+
+    border-top: 1px solid var(--employee-border);
+}
+
+
+.employee-logout {
+    min-height: 46px;
+
+    padding: 0 13px;
+
+    display: flex;
+    align-items: center;
+    gap: 13px;
+
+    color: #777;
+
+    text-decoration: none;
+
+    border-radius: 10px;
+
+    font-size: 13px;
+    font-weight: 600;
+
+    transition:
+        background 0.25s ease,
+        color 0.25s ease;
+}
+
+
+.employee-logout:hover {
+    background: rgba(217, 83, 79, 0.08);
+    color: var(--employee-danger);
+}
+
+
+/* =========================================================
+   MAIN CONTENT OFFSET
+   ========================================================= */
+
+.employee-main {
+    width: calc(100% - var(--employee-sidebar-width));
+    min-height: 100vh;
+
+    margin-left: var(--employee-sidebar-width);
+    padding: 24px 32px;
+
+    background: var(--employee-bg);
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 900px) {
+
+    :root {
+        --employee-sidebar-width: 230px;
+    }
+
+    .employee-sidebar-brand {
+        padding: 18px;
+    }
+
+}
+
+
+@media (max-width: 700px) {
+
+    .employee-sidebar {
+        width: 76px;
+    }
+
+    .employee-sidebar-brand {
+        justify-content: center;
+        padding: 18px 10px;
+    }
+
+    .employee-brand-text {
+        display: none;
+    }
+
+    .employee-nav {
+        padding: 20px 10px;
+    }
+
+    .employee-nav-label {
+        display: none;
+    }
+
+    .employee-nav-item {
+        justify-content: center;
+        padding: 0;
+        gap: 0;
+    }
+
+    .employee-nav-item span:last-child {
+        display: none;
+    }
+
+    .employee-nav-icon {
+        width: 100%;
+    }
+
+    .employee-nav-label-account {
+        display: none;
+    }
+
+    .employee-logout {
+        justify-content: center;
+        padding: 0;
+    }
+
+    .employee-logout span:last-child {
+        display: none;
+    }
+
+    .employee-main {
+        width: calc(100% - 76px);
+        margin-left: 76px;
+    }
+
+}
+
+@media (max-width: 1100px) {
+
+    :root {
+        --employee-sidebar-width: 76px;
+    }
+
+    .employee-sidebar {
+        width: 76px;
+    }
+
+    .employee-sidebar-brand {
+        justify-content: center;
+        padding: 18px 10px;
+    }
+
+    .employee-brand-text,
+    .employee-nav-label,
+    .employee-nav-item span:last-child,
+    .employee-nav-label-account,
+    .employee-logout span:last-child {
+        display: none;
+    }
+
+    .employee-nav {
+        padding: 20px 10px;
+    }
+
+    .employee-nav-item,
+    .employee-logout {
+        justify-content: center;
+        padding: 0;
+        gap: 0;
+    }
+
+    .employee-nav-icon {
+        width: 100%;
+    }
+
+    .employee-main {
+        width: calc(100% - 76px);
+        margin-left: 76px;
+    }
+}

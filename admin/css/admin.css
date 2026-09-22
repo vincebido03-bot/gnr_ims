@@ -1,0 +1,114 @@
+/* =========================================================
+   GNR IMS - ADMIN LOGIN
+   ========================================================== */
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: Arial, sans-serif;
+    background: #111;
+}
+
+.login-container {
+    width: 100%;
+    max-width: 420px;
+    padding: 25px;
+}
+
+.login-box {
+    background: #1b1b1b;
+    border: 1px solid #333;
+    border-radius: 18px;
+    padding: 40px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+
+.logo {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.logo h1 {
+    color: #fff;
+    font-size: 28px;
+    letter-spacing: 2px;
+}
+
+.logo span {
+    color: #d6a84f;
+}
+
+.logo p {
+    color: #888;
+    font-size: 12px;
+    margin-top: 8px;
+    letter-spacing: 1px;
+}
+
+.form-group {
+    margin-bottom: 18px;
+}
+
+.form-group label {
+    display: block;
+    color: #bbb;
+    font-size: 13px;
+    margin-bottom: 8px;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 13px 14px;
+    border-radius: 10px;
+    border: 1px solid #3a3a3a;
+    background: #111;
+    color: #fff;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+.form-group input:focus {
+    border-color: #d6a84f;
+}
+
+.error {
+    background: rgba(180, 40, 40, 0.15);
+    border: 1px solid #8f3333;
+    color: #ff8c8c;
+    padding: 12px;
+    border-radius: 10px;
+    margin-bottom: 18px;
+    font-size: 13px;
+}
+
+button {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 10px;
+    background: #d6a84f;
+    color: #111;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+button:hover {
+    transform: translateY(-2px);
+    opacity: 0.9;
+}
+
+.footer {
+    text-align: center;
+    margin-top: 22px;
+    color: #666;
+    font-size: 11px;
+}

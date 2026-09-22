@@ -1,0 +1,1031 @@
+
+/* =========================================================
+   GNR IMS - EMPLOYEES
+   ========================================================== */
+
+.employee-form-card,
+.employee-list-card {
+    background: #151515;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 18px;
+    padding: 28px;
+    margin-bottom: 24px;
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.18);
+}
+
+
+/* =========================================================
+   MESSAGES
+   ========================================================== */
+
+.employee-message {
+    padding: 14px 18px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.employee-message.error {
+    background: rgba(180, 50, 50, 0.12);
+    border: 1px solid rgba(220, 80, 80, 0.25);
+    color: #ff8d8d;
+}
+
+.employee-message.success {
+    background: rgba(70, 160, 100, 0.12);
+    border: 1px solid rgba(90, 190, 120, 0.25);
+    color: #8ee0a8;
+}
+
+
+/* =========================================================
+   FORM HEADER
+   ========================================================== */
+
+.employee-form-header {
+    margin-bottom: 28px;
+}
+
+.employee-form-header span,
+.employee-list-header span {
+    display: block;
+    margin-bottom: 7px;
+    color: #c9a45c;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.8px;
+}
+
+.employee-form-header h2,
+.employee-list-header h2 {
+    margin: 0;
+    color: #ffffff;
+    font-size: 24px;
+    font-weight: 700;
+}
+
+
+/* =========================================================
+   FORM GRID
+   ========================================================== */
+
+.employee-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+}
+
+.form-group {
+    position: relative;
+    min-width: 0;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+
+/* =========================================================
+   FORM LABELS
+   ========================================================== */
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #d7d7d7;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+
+/* =========================================================
+   FORM INPUTS
+   ========================================================== */
+
+.form-group input,
+.form-group textarea,
+.date-picker-input {
+    box-sizing: border-box;
+    width: 100%;
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    border-radius: 10px;
+    background: #202020;
+    color: #ffffff;
+    padding: 12px 14px;
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+    transition:
+        border-color 0.2s ease,
+        background 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.form-group input {
+    height: 46px;
+}
+
+.form-group textarea {
+    min-height: 82px;
+    resize: vertical;
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+    color: #666;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.date-picker-input:focus {
+    border-color: #c9a45c;
+    background: #242424;
+    box-shadow: 0 0 0 3px rgba(201, 164, 92, 0.08);
+}
+
+
+/* =========================================================
+   CUSTOM DATE PICKER
+   ========================================================== */
+
+.date-picker-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.date-picker-input {
+    padding-right: 48px !important;
+    cursor: pointer;
+}
+
+.date-picker-button {
+    position: absolute;
+    top: 50%;
+    right: 7px;
+    transform: translateY(-50%);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 34px;
+    height: 34px;
+
+    border: 0;
+    border-radius: 8px;
+
+    background: transparent;
+    color: #c9a45c;
+
+    font-size: 17px;
+    cursor: pointer;
+
+    z-index: 5;
+}
+
+.date-picker-button:hover {
+    background: rgba(201, 164, 92, 0.10);
+}
+
+
+/* =========================================================
+   CALENDAR POPUP
+   ========================================================== */
+
+.calendar-popup {
+    display: none;
+
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+
+    width: 320px;
+    max-width: 100%;
+
+    box-sizing: border-box;
+
+    padding: 18px;
+
+    background: #181818;
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    border-radius: 16px;
+
+    box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.55);
+
+    z-index: 9999;
+
+    animation: calendarFadeIn 0.15s ease;
+}
+
+.calendar-popup.active {
+    display: block;
+}
+
+@keyframes calendarFadeIn {
+
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+}
+
+
+/* =========================================================
+   CALENDAR HEADER
+   ========================================================== */
+
+.calendar-header {
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr) 40px;
+
+    align-items: center;
+
+    gap: 10px;
+
+    margin-bottom: 18px;
+}
+
+.calendar-header strong {
+    text-align: center;
+
+    color: #ffffff;
+
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.calendar-header button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 100%;
+    height: 36px;
+
+    padding: 0;
+
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 9px;
+
+    background: #232323;
+    color: #ffffff;
+
+    font-size: 22px;
+    line-height: 1;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.calendar-header button:hover {
+    background: #2d2d2d;
+    border-color: rgba(201, 164, 92, 0.35);
+}
+
+
+/* =========================================================
+   WEEKDAYS
+   ========================================================== */
+
+.calendar-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+
+    gap: 4px;
+
+    margin-bottom: 6px;
+}
+
+.calendar-weekdays span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    height: 28px;
+
+    color: #777;
+
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+
+/* =========================================================
+   CALENDAR DAYS
+   ========================================================== */
+
+.calendar-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+
+    gap: 4px;
+}
+
+.calendar-days button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 100%;
+    height: 36px;
+
+    padding: 0;
+
+    border: 1px solid transparent;
+    border-radius: 8px;
+
+    background: transparent;
+    color: #eeeeee;
+
+    font-family: inherit;
+    font-size: 12px;
+
+    cursor: pointer;
+
+    transition:
+        background 0.15s ease,
+        color 0.15s ease,
+        border-color 0.15s ease;
+}
+
+.calendar-days button:hover {
+    background: #292929;
+}
+
+.calendar-days button.other-month {
+    color: #4f4f4f;
+}
+
+.calendar-days button.today {
+    border-color: #c9a45c;
+    color: #c9a45c;
+}
+
+.calendar-days button.selected {
+    background: #c9a45c;
+    border-color: #c9a45c;
+    color: #151515;
+    font-weight: 700;
+}
+
+.calendar-days button.selected:hover {
+    background: #d8b66e;
+}
+
+
+/* =========================================================
+   TODAY BUTTON
+   ========================================================== */
+
+.calendar-today {
+    display: block;
+
+    width: 100%;
+
+    margin-top: 14px;
+    padding: 10px;
+
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 9px;
+
+    background: #222222;
+    color: #c9a45c;
+
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.calendar-today:hover {
+    background: #292929;
+    border-color: rgba(201, 164, 92, 0.30);
+}
+
+
+/* =========================================================
+   SAVE BUTTON
+   ========================================================== */
+
+.employee-save-btn {
+    margin-top: 24px;
+
+    padding: 13px 22px;
+
+    border: none;
+    border-radius: 10px;
+
+    background: #c9a45c;
+    color: #151515;
+
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+
+    cursor: pointer;
+
+    transition:
+        transform 0.2s ease,
+        background 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.employee-save-btn:hover {
+    background: #d8b66e;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(201, 164, 92, 0.18);
+}
+
+
+/* =========================================================
+   EMPLOYEE LIST HEADER
+   ========================================================== */
+
+.employee-list-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    margin-bottom: 24px;
+}
+
+.employee-list-header > strong {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    min-width: 38px;
+    height: 38px;
+
+    padding: 0 10px;
+
+    border-radius: 10px;
+
+    background: #222;
+    color: #c9a45c;
+
+    font-size: 13px;
+}
+
+
+/* =========================================================
+   TABLE
+   ========================================================== */
+
+.employee-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.employee-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.employee-table th {
+    padding: 13px 14px;
+
+    border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+
+    color: #777;
+
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-align: left;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.employee-table td {
+    padding: 16px 14px;
+
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+
+    color: #cfcfcf;
+
+    font-size: 13px;
+
+    vertical-align: middle;
+}
+
+.employee-table tbody tr {
+    transition: background 0.2s ease;
+}
+
+.employee-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.025);
+}
+
+.employee-table td strong {
+    display: block;
+
+    color: #ffffff;
+
+    font-size: 13px;
+}
+
+.employee-table td small {
+    display: block;
+
+    margin-top: 3px;
+
+    color: #777;
+
+    font-size: 11px;
+}
+
+
+/* =========================================================
+   EMPLOYEE STATUS
+   ========================================================== */
+
+.employee-status {
+    display: inline-flex;
+    align-items: center;
+
+    padding: 6px 9px;
+
+    border-radius: 7px;
+
+    background: rgba(80, 180, 100, 0.10);
+    color: #8bd49a;
+
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.employee-status-archived {
+    background: rgba(214, 168, 79, 0.12);
+    border: 1px solid rgba(214, 168, 79, 0.25);
+    color: #d6a84f;
+}
+
+.employee-status-suspended {
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.25);
+    color: #fbbf24;
+}
+
+.employee-status-inactive {
+    background: rgba(148, 163, 184, 0.12);
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    color: #cbd5e1;
+}
+
+.employee-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+.employee-action-link,
+.employee-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 9px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: #1f1f1f;
+    color: #dcdcdc;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.7px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.employee-action-link:hover,
+.employee-action-btn:hover {
+    transform: translateY(-1px);
+    border-color: rgba(201, 164, 92, 0.30);
+}
+
+.employee-action-link.muted {
+    opacity: 0.7;
+}
+
+.suspend-btn {
+    background: rgba(245, 158, 11, 0.10);
+    border-color: rgba(245, 158, 11, 0.25);
+    color: #fbbf24;
+}
+
+.archive-btn {
+    background: rgba(214, 168, 79, 0.10);
+    border-color: rgba(214, 168, 79, 0.25);
+    color: #d6a84f;
+}
+
+.account-btn {
+    background: rgba(148, 163, 184, 0.10);
+    border-color: rgba(148, 163, 184, 0.25);
+    color: #dfe7f3;
+}
+
+.inline-action-form {
+    display: inline-block;
+    margin: 0;
+}
+
+
+/* =========================================================
+   EMPTY STATE
+   ========================================================== */
+
+.employee-empty {
+    padding: 55px 20px;
+
+    text-align: center;
+}
+
+.employee-empty > div {
+    margin-bottom: 12px;
+
+    font-size: 34px;
+}
+
+.employee-empty h3 {
+    margin: 0 0 7px;
+
+    color: #ffffff;
+
+    font-size: 18px;
+}
+
+.employee-empty p {
+    margin: 0;
+
+    color: #777;
+
+    font-size: 13px;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================== */
+
+@media (max-width: 800px) {
+
+    .employee-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .form-group.full-width {
+        grid-column: auto;
+    }
+
+}
+
+
+@media (max-width: 600px) {
+
+    .employee-form-card,
+    .employee-list-card {
+        padding: 20px;
+        border-radius: 14px;
+    }
+
+    .employee-form-header h2,
+    .employee-list-header h2 {
+        font-size: 20px;
+    }
+
+    .calendar-popup {
+        width: 300px;
+    }
+
+}
+
+
+@media (max-width: 400px) {
+
+    .calendar-popup {
+        width: 100%;
+    }
+
+    .calendar-days button {
+        height: 32px;
+    }
+
+}
+
+
+/* =========================================================
+   MONTH / YEAR SELECTOR
+   ========================================================== */
+
+.calendar-view,
+.calendar-selector {
+    display: none;
+}
+
+.calendar-view.active,
+.calendar-selector.active {
+    display: block;
+}
+
+.calendar-month-year-button {
+    min-width: 0;
+    width: 100%;
+
+    border: none !important;
+    background: transparent !important;
+
+    color: #ffffff;
+
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    padding: 6px 8px;
+
+    border-radius: 8px;
+
+    transition:
+        background 0.2s ease,
+        color 0.2s ease;
+}
+
+.calendar-month-year-button:hover {
+    background: rgba(201, 164, 92, 0.10) !important;
+    color: #c9a45c;
+}
+
+
+/* =========================================================
+   SELECTOR PANEL
+   ========================================================== */
+
+/* =========================================================
+   SELECTOR YEAR HEADER
+   ========================================================== */
+
+.calendar-selector-header {
+    display: grid;
+
+    grid-template-columns: 40px minmax(0, 1fr) 40px;
+
+    align-items: center;
+
+    gap: 10px;
+
+    margin-bottom: 16px;
+}
+
+.calendar-selector-header strong {
+    text-align: center;
+
+    color: #ffffff;
+
+    font-size: 15px;
+}
+
+
+.calendar-selector-header button {
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    width: 100%;
+    height: 36px;
+
+    padding: 0;
+
+    border: 1px solid rgba(255,255,255,0.08);
+
+    border-radius: 9px;
+
+    background: #232323;
+
+    color: #ffffff;
+
+    font-size: 20px;
+
+    cursor: pointer;
+}
+
+
+.calendar-selector-header button:hover {
+    background: #2d2d2d;
+
+    border-color:
+        rgba(201,164,92,0.35);
+}
+
+
+/* =========================================================
+   MONTH GRID
+   ========================================================== */
+
+.calendar-month-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, 1fr);
+
+    gap: 8px;
+}
+
+
+.calendar-month-grid button {
+    height: 40px;
+
+    border: 1px solid
+        rgba(255,255,255,0.06);
+
+    border-radius: 9px;
+
+    background: #222222;
+
+    color: #dddddd;
+
+    font-family: inherit;
+
+    font-size: 12px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        color 0.2s ease,
+        border-color 0.2s ease;
+}
+
+
+.calendar-month-grid button:hover {
+    background: #2d2d2d;
+
+    color: #c9a45c;
+
+    border-color:
+        rgba(201,164,92,0.30);
+}
+
+
+.calendar-month-grid button.selected {
+    background: #c9a45c;
+
+    border-color: #c9a45c;
+
+    color: #151515;
+
+    font-weight: 800;
+}
+
+
+.calendar-selector-title {
+    margin-bottom: 16px;
+
+    color: #ffffff;
+
+    font-size: 14px;
+    font-weight: 700;
+    text-align: center;
+}
+
+
+.calendar-selector-back {
+    display: block;
+
+    width: 100%;
+
+    margin-top: 16px;
+    padding: 10px;
+
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 9px;
+
+    background: #222222;
+    color: #c9a45c;
+
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+
+    cursor: pointer;
+}
+
+
+.calendar-selector-back:hover {
+    background: #292929;
+    border-color: rgba(201, 164, 92, 0.30);
+}
+
+
+/* =========================================================
+   CALENDAR EMPTY SPACE
+   ========================================================== */
+
+.calendar-empty {
+    height: 36px;
+}
+
+/* =========================================================
+   EMPLOYEE LOGIN ACCOUNT SECTION
+   ========================================================== */
+
+.employee-account-section {
+    margin-top: 30px;
+    padding: 24px;
+    border: 1px solid rgba(201, 164, 92, 0.18);
+    border-radius: 16px;
+    background: #181818;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.14);
+}
+
+.employee-account-header {
+    margin-bottom: 22px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.employee-account-header span {
+    display: block;
+    margin-bottom: 6px;
+    color: #c9a45c;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.8px;
+}
+
+.employee-account-header h3 {
+    margin: 0 0 6px;
+    color: #ffffff;
+    font-size: 19px;
+    font-weight: 700;
+}
+
+.employee-account-header p {
+    margin: 0;
+    color: #777777;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+
+/* =========================================================
+   ACCOUNT INPUTS
+   ========================================================== */
+
+.employee-account-section .form-group input {
+    background: #202020;
+}
+
+.employee-account-section .form-group input:focus {
+    border-color: #c9a45c;
+    background: #242424;
+    box-shadow: 0 0 0 3px rgba(201, 164, 92, 0.08);
+}
+
+.employee-account-section .form-group small {
+    display: block;
+    margin-top: 6px;
+    color: #666666;
+    font-size: 11px;
+}
+
+
+/* =========================================================
+   ACCOUNT SECTION RESPONSIVE
+   ========================================================== */
+
+@media (max-width: 600px) {
+
+    .employee-account-section {
+        padding: 20px;
+        border-radius: 14px;
+    }
+
+    .employee-account-header h3 {
+        font-size: 17px;
+    }
+
+}

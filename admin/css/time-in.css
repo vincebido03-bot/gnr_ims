@@ -1,0 +1,269 @@
+/* =========================================================
+   GNR IMS - TIME IN
+   ========================================================== */
+
+.time-in-container {
+    width: 100%;
+    max-width: 650px;
+    margin: 0 auto;
+}
+
+
+/* =========================================================
+   MESSAGE
+   ========================================================== */
+
+.time-message {
+    margin-bottom: 18px;
+    padding: 12px 15px;
+
+    border-radius: 9px;
+
+    font-size: 11px;
+}
+
+.time-message.success {
+    background: rgba(80, 160, 90, 0.08);
+    border: 1px solid rgba(80, 160, 90, 0.25);
+    color: #8fca98;
+}
+
+.time-message.error {
+    background: rgba(180, 50, 50, 0.08);
+    border: 1px solid rgba(180, 50, 50, 0.25);
+    color: #d98b8b;
+}
+
+
+/* =========================================================
+   TIME CARD
+   ========================================================== */
+
+.time-card {
+    background: #191919;
+
+    border: 1px solid #2d2d2d;
+    border-radius: 18px;
+
+    padding: 35px;
+
+    display: flex;
+    align-items: flex-start;
+    gap: 22px;
+}
+
+
+/* =========================================================
+   ICON
+   ========================================================== */
+
+.time-icon {
+    width: 58px;
+    height: 58px;
+
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: #242424;
+
+    border: 1px solid #333;
+    border-radius: 14px;
+
+    font-size: 25px;
+}
+
+
+/* =========================================================
+   CONTENT
+   ========================================================== */
+
+.time-card-content {
+    flex: 1;
+}
+
+.time-label {
+    color: #d6a84f;
+
+    font-size: 9px;
+    font-weight: 700;
+
+    letter-spacing: 1.5px;
+}
+
+.time-card h2 {
+    margin: 7px 0 12px;
+
+    color: #ffffff;
+
+    font-size: 24px;
+}
+
+.time-description {
+    margin: 0 0 22px;
+
+    color: #777;
+
+    font-size: 11px;
+    line-height: 1.6;
+}
+
+
+/* =========================================================
+   TIME IN BUTTON
+   ========================================================== */
+
+.time-in-btn {
+    width: 100%;
+
+    padding: 14px;
+
+    background: #d6a84f;
+
+    border: none;
+    border-radius: 9px;
+
+    color: #111;
+
+    font-size: 11px;
+    font-weight: 700;
+
+    letter-spacing: 1px;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        transform 0.2s ease;
+}
+
+.time-in-btn:hover {
+    background: #e2b967;
+    transform: translateY(-1px);
+}
+
+.time-in-btn:active {
+    transform: translateY(0);
+}
+
+
+/* =========================================================
+   ATTENDANCE STATUS
+   ========================================================== */
+
+.attendance-status {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 12px 14px;
+
+    margin-bottom: 15px;
+
+    background: #151515;
+
+    border: 1px solid #292929;
+    border-radius: 9px;
+}
+
+.attendance-status span {
+    color: #666;
+
+    font-size: 9px;
+    letter-spacing: 1px;
+}
+
+.attendance-status strong {
+    color: #8fca98;
+
+    font-size: 10px;
+    letter-spacing: 0.5px;
+}
+
+
+/* =========================================================
+   ATTENDANCE TIME
+   ========================================================== */
+
+.attendance-time {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+
+    gap: 12px;
+
+    margin-bottom: 18px;
+}
+
+.attendance-time > div {
+    padding: 14px;
+
+    background: #151515;
+
+    border: 1px solid #292929;
+    border-radius: 9px;
+}
+
+.attendance-time small {
+    display: block;
+
+    margin-bottom: 6px;
+
+    color: #666;
+
+    font-size: 8px;
+    letter-spacing: 1px;
+}
+
+.attendance-time strong {
+    color: #ffffff;
+
+    font-size: 15px;
+}
+
+
+/* =========================================================
+   ALREADY TIMED
+   ========================================================== */
+
+.already-timed {
+    padding: 11px 13px;
+
+    background: rgba(80, 160, 90, 0.06);
+
+    border: 1px solid rgba(80, 160, 90, 0.18);
+    border-radius: 8px;
+
+    color: #7dbb86;
+
+    font-size: 10px;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================== */
+
+@media (max-width: 600px) {
+
+    .time-card {
+        padding: 25px;
+
+        flex-direction: column;
+    }
+
+    .time-icon {
+        width: 50px;
+        height: 50px;
+    }
+
+    .time-card h2 {
+        font-size: 21px;
+    }
+
+    .attendance-time {
+        grid-template-columns: 1fr;
+    }
+
+}
