@@ -156,46 +156,7 @@ foreach ($recentLogs as $row) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GNR IMS - Employee Dashboard</title>
     <link rel="stylesheet" href="css/employee.css">
-    <style>
-        html, body { overflow-x: hidden; }
-        .topbar { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 28px 30px 20px; min-width: 0; }
-        .topbar > div:first-child { min-width: 0; }
-        .topbar h1 { margin: 0; font-size: 28px; overflow-wrap: anywhere; }
-        .topbar p { margin: 8px 0 0; color: #8f8f8f; font-size: 13px; }
-        .user-info { display: flex; align-items: center; gap: 10px; }
-        .user-avatar { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border: 1px solid #c9a227; border-radius: 50%; color: #c9a227; font-size: 14px; font-weight: 800; }
-        .user-info strong, .user-info small { display: block; }
-        .user-info small { margin-top: 3px; color: #8f8f8f; font-size: 9px; letter-spacing: 1px; }
-        .employee-dashboard { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; min-width: 0; }
-        .employee-welcome { grid-column: 1 / -1; background: #111; border: 1px solid rgba(255,255,255,.08); border-radius: 18px; padding: 30px; }
-        .employee-welcome span { display: block; font-size: 12px; letter-spacing: 2px; opacity: .6; margin-bottom: 8px; }
-        .employee-welcome h2 { margin: 0; font-size: 32px; }
-        .employee-welcome p { margin: 8px 0 0; opacity: .65; }
-        .employee-card { min-width: 0; background: #111; border: 1px solid rgba(255,255,255,.08); border-radius: 18px; padding: 25px; }
-        .employee-card.quick-access-card { grid-column: 1 / -1; }
-        .employee-card h3 { margin: 0 0 20px; font-size: 15px; letter-spacing: 1px; }
-        .attendance-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
-        .attendance-box { background: rgba(255,255,255,.04); border-radius: 12px; padding: 18px; }
-        .attendance-box small { display: block; opacity: .5; font-size: 11px; margin-bottom: 8px; }
-        .attendance-box strong { font-size: 18px; }
-        .employee-links { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-        .employee-link { display: block; padding: 18px; border-radius: 12px; background: rgba(255,255,255,.04); text-decoration: none; color: inherit; transition: .2s ease; }
-        .employee-link:hover { transform: translateY(-2px); background: rgba(255,255,255,.08); }
-        .employee-link strong { display: block; margin-bottom: 5px; }
-        .employee-link span { font-size: 12px; opacity: .5; }
-        .recent-log-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
-        .recent-log-item { display: flex; justify-content: space-between; gap: 16px; align-items: center; background: rgba(255,255,255,.04); border-radius: 12px; padding: 12px 14px; }
-        .recent-log-item .meta { font-size: 12px; color: #c7c7c7; }
-        .recent-log-item .hours { font-weight: 700; color: #d4b34d; }
-        @media (max-width: 1100px) {
-            .topbar { align-items: flex-start; flex-direction: column; padding: 22px 16px 16px; }
-            .user-info { margin-left: 0; }
-            .employee-dashboard { grid-template-columns: minmax(0, 1fr); gap: 14px; }
-            .employee-welcome { grid-column: auto; padding: 22px; }
-            .employee-card { padding: 20px; }
-            .attendance-grid, .employee-links { grid-template-columns: minmax(0, 1fr); }
-        }
-    </style>
+    <link rel="stylesheet" href="css/dashboard.css">
 </head>
 
 <body>
@@ -205,6 +166,7 @@ foreach ($recentLogs as $row) {
     <main class="employee-main">
         <header class="topbar">
             <div>
+                <div class="dashboard-eyebrow">EMPLOYEE PORTAL / DASHBOARD</div>
                 <h1>Employee Dashboard</h1>
                 <p>Welcome to your GNR IMS employee portal.</p>
             </div>

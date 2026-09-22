@@ -42,32 +42,32 @@ $currentPage = basename($_SERVER["PHP_SELF"]);
             OPERATIONS
         </div>
 
-        <a href="#" class="nav-item">
+        <a href="customers.php" class="nav-item <?= $currentPage === 'customers.php' ? 'active' : '' ?>">
             <span>👤</span>
             Customers
         </a>
 
-        <a href="#" class="nav-item">
+        <a href="vehicles.php" class="nav-item <?= $currentPage === 'vehicles.php' ? 'active' : '' ?>">
             <span>🏍</span>
             Vehicles
         </a>
 
-        <a href="#" class="nav-item">
+        <a href="inquiries.php" class="nav-item <?= $currentPage === 'inquiries.php' ? 'active' : '' ?>">
             <span>📋</span>
             Inquiries
         </a>
 
-        <a href="#" class="nav-item">
+        <a href="quotations.php" class="nav-item <?= $currentPage === 'quotations.php' ? 'active' : '' ?>">
             <span>💰</span>
             Quotations
         </a>
 
-        <a href="#" class="nav-item">
+        <a href="orders.php" class="nav-item <?= $currentPage === 'orders.php' ? 'active' : '' ?>">
             <span>🛒</span>
             Orders
         </a>
 
-        <a href="#" class="nav-item">
+        <a href="jobs.php" class="nav-item <?= $currentPage === 'jobs.php' ? 'active' : '' ?>">
             <span>🔧</span>
             Jobs
         </a>
@@ -81,12 +81,12 @@ $currentPage = basename($_SERVER["PHP_SELF"]);
             INVENTORY
         </div>
 
-        <a href="#" class="nav-item">
+        <a href="inventory.php" class="nav-item <?= $currentPage === 'inventory.php' ? 'active' : '' ?>">
             <span>📦</span>
             Inventory
         </a>
 
-        <a href="#" class="nav-item">
+        <a href="stock-movement.php" class="nav-item <?= $currentPage === 'stock-movement.php' ? 'active' : '' ?>">
             <span>↕</span>
             Stock Movement
         </a>

@@ -1,0 +1,24 @@
+.movement-content { max-width: 1600px; padding: 28px; }
+.movement-header { display: flex; align-items: end; justify-content: space-between; gap: 20px; margin-bottom: 22px; }
+.movement-header span { display: block; margin-bottom: 7px; color: #c9a45c; font-size: 11px; font-weight: 700; letter-spacing: 1.8px; }
+.movement-header h2 { margin: 0; color: #fff; font-size: 24px; }
+.movement-header strong { color: #c9a45c; font-size: 13px; }
+.movement-filters { display: grid; grid-template-columns: minmax(220px, 1fr) 220px auto auto; gap: 10px; margin-bottom: 20px; }
+.movement-filters input, .movement-filters select, .movement-filters button, .movement-filters a { min-height: 42px; box-sizing: border-box; border: 1px solid rgba(255,255,255,.1); border-radius: 9px; padding: 0 13px; font: inherit; font-size: 13px; }
+.movement-filters input, .movement-filters select { background: #202020; color: #f5f5f5; }
+.movement-filters button { border-color: #c9a45c; background: #c9a45c; color: #151515; font-weight: 700; cursor: pointer; }
+.movement-filters a { display: inline-flex; align-items: center; justify-content: center; color: #cfcfcf; text-decoration: none; }
+.movement-table-wrap { overflow-x: auto; border: 1px solid rgba(255,255,255,.08); border-radius: 14px; background: #151515; }
+.movement-table { width: 100%; min-width: 980px; border-collapse: collapse; }
+.movement-table th, .movement-table td { padding: 16px 18px; border-bottom: 1px solid rgba(255,255,255,.07); color: #d8d8d8; text-align: left; font-size: 13px; }
+.movement-table th { color: #9b9b9b; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; }
+.movement-table td strong, .movement-table td small { display: block; }
+.movement-table td strong { margin-bottom: 4px; color: #fff; }
+.movement-table td small { color: #8d8d8d; font-size: 11px; }
+.movement-table tr:last-child td { border-bottom: 0; }
+.movement-type { display: inline-block; border-radius: 999px; padding: 5px 9px; font-size: 10px; font-weight: 700; letter-spacing: .5px; }
+.movement-type.stock_in, .movement-type.release_reservation { background: rgba(111,190,129,.14); color: #8ee0a8; }
+.movement-type.stock_out { background: rgba(220,100,95,.14); color: #ff9c96; }
+.movement-type.reserve, .movement-type.adjustment { background: rgba(240,179,109,.14); color: #f0b36d; }
+.empty-state { padding: 42px !important; color: #929292 !important; text-align: center !important; }
+@media (max-width: 850px) { .movement-content { padding: 20px 16px; } .movement-filters { grid-template-columns: 1fr 1fr; } .movement-filters input { grid-column: 1 / -1; } }
