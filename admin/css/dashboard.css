@@ -24,6 +24,11 @@ body {
     min-height: 100vh;
 }
 
+.main-content > section {
+    width: 100%;
+    max-width: none !important;
+}
+
 
 /* =========================================================
    TOPBAR

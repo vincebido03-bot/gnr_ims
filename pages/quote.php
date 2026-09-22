@@ -36,13 +36,18 @@
         class="quote-form"
         name="quote"
         method="POST"
-        action="/"
-        data-netlify="true"
-        netlify-honeypot="bot-field"
+        action="index.php#quote"
         enctype="multipart/form-data"
     >
 
         <input type="hidden" name="form-name" value="quote">
+        <input type="hidden" name="quote_form_token" value="<?= htmlspecialchars($_SESSION["quote_form_token"] ?? "", ENT_QUOTES) ?>">
+
+        <?php if (!empty($quoteMessage) && $quoteMessageType !== "success"): ?>
+            <div class="quote-form-message <?= htmlspecialchars($quoteMessageType) ?>">
+                <?= htmlspecialchars($quoteMessage) ?>
+            </div>
+        <?php endif; ?>
 
         <p hidden>
             <label>Do not fill this out: <input name="bot-field"></label>
@@ -138,7 +143,6 @@
 
                 </div>
 
-
                 <div class="quote-field">
 
                     <label for="customer_phone">
@@ -205,6 +209,20 @@
 
                     </select>
 
+                </div>
+
+                <div class="quote-field quote-field-full">
+                    <label for="social_link">
+                        Social Media Link <span class="quote-optional">(Optional)</span>
+                    </label>
+                    <div class="quote-social-fields">
+                        <select id="social_platform" name="social_platform">
+                            <option value="">Select platform</option>
+                            <option value="Facebook">Facebook</option>
+                            <option value="Instagram">Instagram</option>
+                        </select>
+                        <input type="url" id="social_link" name="social_link" placeholder="https://facebook.com/yourprofile">
+                    </div>
                 </div>
 
             </div>
@@ -353,6 +371,26 @@
 
                     </select>
 
+                </div>
+
+                <div class="quote-field">
+                    <label for="plate_no">Plate Number <span class="quote-optional">(Optional)</span></label>
+                    <input type="text" id="plate_no" name="plate_no" placeholder="e.g. ABC 1234">
+                </div>
+
+                <div class="quote-field">
+                    <label for="engine_no">Engine Number <span class="quote-optional">(Optional)</span></label>
+                    <input type="text" id="engine_no" name="engine_no" placeholder="Enter engine number">
+                </div>
+
+                <div class="quote-field">
+                    <label for="chassis_no">Chassis Number <span class="quote-optional">(Optional)</span></label>
+                    <input type="text" id="chassis_no" name="chassis_no" placeholder="Enter chassis number">
+                </div>
+
+                <div class="quote-field">
+                    <label for="color">Motorcycle Color <span class="quote-optional">(Optional)</span></label>
+                    <input type="text" id="color" name="color" placeholder="e.g. Matte Black">
                 </div>
 
             </div>
@@ -631,7 +669,13 @@
                         JPG, PNG or WEBP &mdash; you may upload multiple images.
                     </span>
 
+                    <span class="quote-upload-selected" data-upload-selected>
+                        No images selected yet.
+                    </span>
+
                 </label>
+
+                <div class="quote-upload-preview" data-upload-preview aria-live="polite"></div>
 
             </div>
                 </div>

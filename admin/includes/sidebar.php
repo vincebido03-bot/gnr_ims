@@ -108,12 +108,12 @@ $currentPage = basename($_SERVER["PHP_SELF"]);
             Employees
         </a>
 
-        <a href="#" class="nav-item">
+        <a href="attendance.php" class="nav-item <?= $currentPage === 'attendance.php' ? 'active' : '' ?>">
             <span>🕒</span>
             Attendance
         </a>
 
-        <a href="#" class="nav-item">
+        <a href="payroll.php" class="nav-item <?= $currentPage === 'payroll.php' ? 'active' : '' ?>">
             <span>💵</span>
             Payroll
         </a>
@@ -127,22 +127,22 @@ $currentPage = basename($_SERVER["PHP_SELF"]);
             FINANCE
         </div>
 
-        <a href="#" class="nav-item">
+        <a href="quality-control.php" class="nav-item <?= $currentPage === 'quality-control.php' ? 'active' : '' ?>">
             <span>✓</span>
             Quality Control
         </a>
 
-        <a href="#" class="nav-item">
+        <a href="invoices.php" class="nav-item <?= $currentPage === 'invoices.php' ? 'active' : '' ?>">
             <span>🧾</span>
             Invoices
         </a>
 
-        <a href="#" class="nav-item">
+        <a href="payments.php" class="nav-item <?= $currentPage === 'payments.php' ? 'active' : '' ?>">
             <span>₱</span>
             Payments
         </a>
 
-        <a href="#" class="nav-item">
+        <a href="releases.php" class="nav-item <?= $currentPage === 'releases.php' ? 'active' : '' ?>">
             <span>🚚</span>
             Releases
         </a>
@@ -164,7 +164,7 @@ $currentPage = basename($_SERVER["PHP_SELF"]);
             Notifications
         </a>
 
-        <a href="#" class="nav-item">
+        <a href="settings.php" class="nav-item <?= $currentPage === 'settings.php' ? 'active' : '' ?>">
             <span>⚙</span>
             Settings
         </a>

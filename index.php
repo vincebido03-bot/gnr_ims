@@ -1,4 +1,149 @@
-﻿<!DOCTYPE html>
+﻿<?php
+
+require_once __DIR__ . "/config/database.php";
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+$quoteMessage = $_SESSION["quote_message"] ?? "";
+$quoteMessageType = $_SESSION["quote_message_type"] ?? "";
+unset($_SESSION["quote_message"], $_SESSION["quote_message_type"]);
+
+if (empty($_SESSION["quote_form_token"])) {
+    $_SESSION["quote_form_token"] = bin2hex(random_bytes(32));
+}
+
+if ($_SERVER["REQUEST_METHOD"] === "POST" && ($_POST["form-name"] ?? "") === "quote") {
+    $submittedToken = $_POST["quote_form_token"] ?? "";
+    $validToken = !empty($_SESSION["quote_form_token"])
+        && is_string($submittedToken)
+        && hash_equals($_SESSION["quote_form_token"], $submittedToken);
+
+    if (!$validToken) {
+        header("Location: index.php");
+        exit;
+    }
+
+    $customerName = trim($_POST["customer_name"] ?? "");
+    $customerPhone = trim($_POST["customer_phone"] ?? "");
+    $customerEmail = trim($_POST["customer_email"] ?? "");
+    $socialPlatform = trim($_POST["social_platform"] ?? "");
+    $socialLink = trim($_POST["social_link"] ?? "");
+    $brand = trim($_POST["motorcycle_brand"] ?? "");
+    $model = trim($_POST["motorcycle_model"] ?? "");
+    $yearModel = trim($_POST["motorcycle_year"] ?? "");
+    $plateNo = trim($_POST["plate_no"] ?? "");
+    $engineNo = trim($_POST["engine_no"] ?? "");
+    $chassisNo = trim($_POST["chassis_no"] ?? "");
+    $color = trim($_POST["color"] ?? "");
+    $serviceType = trim($_POST["service_type"] ?? "");
+    $projectDescription = trim($_POST["project_description"] ?? "");
+    $preferredDate = trim($_POST["preferred_date"] ?? "");
+    $budgetRange = trim($_POST["budget_range"] ?? "");
+
+    if ($customerName === "" || $customerPhone === "" || $serviceType === "" || $projectDescription === "") {
+        $quoteMessage = "Please complete the required customer and project fields.";
+        $quoteMessageType = "error";
+    } elseif ($customerEmail !== "" && !filter_var($customerEmail, FILTER_VALIDATE_EMAIL)) {
+        $quoteMessage = "Please enter a valid email address.";
+        $quoteMessageType = "error";
+    } elseif ($socialLink !== "" && (!filter_var($socialLink, FILTER_VALIDATE_URL) || !preg_match('/^https?:\/\//i', $socialLink))) {
+        $quoteMessage = "Please enter a valid Facebook or Instagram link.";
+        $quoteMessageType = "error";
+    } else {
+        try {
+            $pdo->beginTransaction();
+
+            $customerStmt = $pdo->prepare("SELECT id FROM customers WHERE contact_no = ? AND fullname = ? LIMIT 1");
+            $customerStmt->execute([$customerPhone, $customerName]);
+            $customerId = $customerStmt->fetchColumn();
+
+            if (!$customerId) {
+                $customerNo = "CUS-" . date("YmdHis") . random_int(10, 99);
+                $customerStmt = $pdo->prepare("INSERT INTO customers (customer_no, fullname, contact_no, facebook, social_platform, social_link, notes) VALUES (?, ?, ?, ?, ?, ?, ?)");
+                $customerStmt->execute([$customerNo, $customerName, $customerPhone, $socialPlatform === "Facebook" ? $socialLink : null, $socialPlatform ?: null, $socialLink ?: null, $customerEmail !== "" ? "Email: " . $customerEmail : null]);
+                $customerId = $pdo->lastInsertId();
+            } elseif ($socialLink !== "") {
+                $customerUpdate = $pdo->prepare("UPDATE customers SET social_platform = ?, social_link = ?, facebook = CASE WHEN ? = 'Facebook' THEN ? ELSE facebook END WHERE id = ?");
+                $customerUpdate->execute([$socialPlatform ?: null, $socialLink, $socialPlatform, $socialLink, $customerId]);
+            }
+
+            $vehicleId = null;
+            if ($brand !== "" || $model !== "" || $yearModel !== "" || $plateNo !== "" || $engineNo !== "" || $chassisNo !== "" || $color !== "") {
+                $vehicleStmt = $pdo->prepare("INSERT INTO vehicles (customer_id, brand, model, year_model, plate_no, engine_no, chassis_no, color) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+                $vehicleStmt->execute([$customerId, $brand ?: null, $model ?: null, $yearModel ?: null, $plateNo ?: null, $engineNo ?: null, $chassisNo ?: null, $color ?: null]);
+                $vehicleId = $pdo->lastInsertId();
+            }
+
+            $inquiryNo = "INQ-" . date("YmdHis") . random_int(10, 99);
+            $description = $projectDescription;
+            $details = array_filter([
+                $preferredDate !== "" ? "Preferred date: " . $preferredDate : null,
+                $budgetRange !== "" ? "Budget: " . $budgetRange : null,
+                !empty($_POST["preferred_contact"]) ? "Preferred contact: " . $_POST["preferred_contact"] : null
+            ]);
+            if ($details) {
+                $description .= "\n\n" . implode("\n", $details);
+            }
+
+            $inquiryStmt = $pdo->prepare("INSERT INTO inquiries (inquiry_no, customer_id, vehicle_id, inquiry_type, description, status) VALUES (?, ?, ?, ?, ?, 'NEW')");
+            $inquiryStmt->execute([$inquiryNo, $customerId, $vehicleId, $serviceType, $description]);
+
+            $inquiryId = $pdo->lastInsertId();
+            $uploadDirectory = __DIR__ . "/uploads/inquiries";
+            $allowedMimeTypes = ["image/jpeg", "image/png", "image/webp"];
+            $uploadedFiles = $_FILES["reference_images"] ?? null;
+
+            if ($uploadedFiles && is_array($uploadedFiles["error"])) {
+                if (!is_dir($uploadDirectory) && !mkdir($uploadDirectory, 0755, true)) {
+                    throw new RuntimeException("Unable to create upload directory.");
+                }
+
+                $fileInfo = new finfo(FILEINFO_MIME_TYPE);
+                foreach ($uploadedFiles["error"] as $index => $uploadError) {
+                    if ($uploadError === UPLOAD_ERR_NO_FILE) {
+                        continue;
+                    }
+                    if ($uploadError !== UPLOAD_ERR_OK || (int) $uploadedFiles["size"][$index] > 5 * 1024 * 1024) {
+                        throw new RuntimeException("Each image must be a valid upload up to 5 MB.");
+                    }
+
+                    $temporaryPath = $uploadedFiles["tmp_name"][$index];
+                    $mimeType = $fileInfo->file($temporaryPath);
+                    if (!in_array($mimeType, $allowedMimeTypes, true) || @getimagesize($temporaryPath) === false) {
+                        throw new RuntimeException("Only valid JPG, PNG, or WEBP images are allowed.");
+                    }
+
+                    $extension = ["image/jpeg" => "jpg", "image/png" => "png", "image/webp" => "webp"][$mimeType];
+                    $storedName = bin2hex(random_bytes(16)) . "." . $extension;
+                    if (!move_uploaded_file($temporaryPath, $uploadDirectory . "/" . $storedName)) {
+                        throw new RuntimeException("Unable to save the uploaded image.");
+                    }
+
+                    $attachmentStmt = $pdo->prepare("INSERT INTO inquiry_attachments (inquiry_id, original_name, stored_name, mime_type, file_size) VALUES (?, ?, ?, ?, ?)");
+                    $attachmentStmt->execute([$inquiryId, basename($uploadedFiles["name"][$index]), $storedName, $mimeType, (int) $uploadedFiles["size"][$index]]);
+                }
+            }
+
+            $pdo->commit();
+            unset($_SESSION["quote_form_token"]);
+            $_SESSION["quote_message"] = "Your inquiry has been submitted. Reference: " . $inquiryNo;
+            $_SESSION["quote_message_type"] = "success";
+            header("Location: index.php");
+            exit;
+        } catch (Throwable $exception) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            $quoteMessage = "We could not submit your inquiry right now. Please try again.";
+            $quoteMessageType = "error";
+        }
+    }
+}
+
+?>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -42,6 +187,19 @@
 </head>
 
 <body>
+
+<?php if ($quoteMessage && $quoteMessageType === "success"): ?>
+    <div class="quote-success-overlay" data-quote-success-modal role="dialog" aria-modal="true" aria-labelledby="quote-success-title">
+        <div class="quote-success-backdrop" data-quote-success-close></div>
+        <div class="quote-success-modal">
+            <button class="quote-success-close" type="button" data-quote-success-close aria-label="Close success message">&times;</button>
+            <div class="quote-success-icon">&#10003;</div>
+            <strong id="quote-success-title">Inquiry submitted</strong>
+            <span><?= htmlspecialchars($quoteMessage) ?></span>
+            <button class="quote-success-button" type="button" data-quote-success-close>Okay</button>
+        </div>
+    </div>
+<?php endif; ?>
 
     <!-- ==========================================
          HEADER / NAVIGATION
@@ -719,6 +877,9 @@ document.addEventListener("DOMContentLoaded", function () {
     const productModalDescription =
         document.getElementById("productModalDescription");
 
+    const productModalPrice =
+        document.getElementById("productModalPrice");
+
     const productModalBuy =
         document.getElementById("productModalBuy");
 
@@ -760,6 +921,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
         productModalDescription.textContent =
             description.textContent.trim();
+
+        if (productModalPrice) {
+            productModalPrice.textContent =
+                card.dataset.productPrice || "CUSTOM QUOTE";
+        }
 
 
         productModalBuy.onclick = function () {

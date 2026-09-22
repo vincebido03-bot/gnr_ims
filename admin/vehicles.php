@@ -2,6 +2,56 @@
 
 require_once "includes/header.php";
 
+$vehicleActionMessage = "";
+$vehicleActionType = "";
+
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["archive_vehicle_id"])) {
+    $vehicleId = (int) $_POST["archive_vehicle_id"];
+
+    try {
+        if ($vehicleId <= 0) {
+            throw new RuntimeException("Invalid vehicle selected.");
+        }
+
+        $pdo->beginTransaction();
+
+        $vehicleStmt = $pdo->prepare("SELECT * FROM vehicles WHERE id = ? LIMIT 1");
+        $vehicleStmt->execute([$vehicleId]);
+        $vehicle = $vehicleStmt->fetch();
+
+        if (!$vehicle) {
+            throw new RuntimeException("Vehicle record not found.");
+        }
+
+        $customerStmt = $pdo->prepare("SELECT * FROM customers WHERE id = ? LIMIT 1");
+        $customerStmt->execute([$vehicle["customer_id"]]);
+        $customer = $customerStmt->fetch();
+
+        archiveRecord(
+            "VEHICLES",
+            $vehicleId,
+            $vehicle["plate_no"] ?: "VEH-" . $vehicleId,
+            trim(($vehicle["brand"] ?? "") . " " . ($vehicle["model"] ?? "")) ?: "Vehicle",
+            $_SESSION["user_id"] ?? null,
+            "Archived from Vehicle Register",
+            ["vehicle" => $vehicle, "customer" => $customer]
+        );
+
+        $deleteStmt = $pdo->prepare("DELETE FROM vehicles WHERE id = ? LIMIT 1");
+        $deleteStmt->execute([$vehicleId]);
+
+        $pdo->commit();
+        $vehicleActionMessage = "Vehicle was moved to Archive.";
+        $vehicleActionType = "success";
+    } catch (Throwable $exception) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        $vehicleActionMessage = "Unable to archive this vehicle. It may be linked to another record.";
+        $vehicleActionType = "error";
+    }
+}
+
 $search = trim($_GET["search"] ?? "");
 $sql = "
     SELECT v.id, v.brand, v.model, v.year_model, v.plate_no, v.engine_no,
@@ -45,6 +95,11 @@ $vehicles = $stmt->fetchAll();
             </div>
         </header>
         <section class="vehicles-content">
+            <?php if ($vehicleActionMessage): ?>
+                <div class="vehicle-action-message <?= htmlspecialchars($vehicleActionType) ?>">
+                    <?= htmlspecialchars($vehicleActionMessage) ?>
+                </div>
+            <?php endif; ?>
             <div class="vehicles-header">
                 <div><span>VEHICLE REGISTER</span><h2>Vehicle Directory</h2></div>
                 <strong><?= number_format(count($vehicles)) ?> vehicle<?= count($vehicles) === 1 ? "" : "s" ?></strong>
@@ -56,10 +111,10 @@ $vehicles = $stmt->fetchAll();
             </form>
             <div class="vehicles-table-wrap">
                 <table class="vehicles-table">
-                    <thead><tr><th>Vehicle</th><th>Owner</th><th>Plate No.</th><th>Engine No.</th><th>Chassis No.</th><th>Color</th></tr></thead>
+                    <thead><tr><th>Vehicle</th><th>Owner</th><th>Plate No.</th><th>Engine No.</th><th>Chassis No.</th><th>Color</th><th>Action</th></tr></thead>
                     <tbody>
                     <?php if (!$vehicles): ?>
-                        <tr><td colspan="6" class="empty-state">No vehicle records found.</td></tr>
+                        <tr><td colspan="7" class="empty-state">No vehicle records found.</td></tr>
                     <?php else: foreach ($vehicles as $vehicle): ?>
                         <tr>
                             <td><strong><?= htmlspecialchars(trim(($vehicle["brand"] ?? "") . " " . ($vehicle["model"] ?? "")) ?: "Unspecified vehicle") ?></strong><small><?= htmlspecialchars($vehicle["year_model"] ?: "Year not specified") ?></small></td>
@@ -68,6 +123,12 @@ $vehicles = $stmt->fetchAll();
                             <td><?= htmlspecialchars($vehicle["engine_no"] ?: "-") ?></td>
                             <td><?= htmlspecialchars($vehicle["chassis_no"] ?: "-") ?></td>
                             <td><?= htmlspecialchars($vehicle["color"] ?: "-") ?></td>
+                            <td>
+                                <form method="post" onsubmit="return confirm('Move this vehicle to Archive?');">
+                                    <input type="hidden" name="archive_vehicle_id" value="<?= (int) $vehicle["id"] ?>">
+                                    <button type="submit" class="archive-vehicle-button">Archive</button>
+                                </form>
+                            </td>
                         </tr>
                     <?php endforeach; endif; ?>
                     </tbody>

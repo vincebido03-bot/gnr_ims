@@ -4,7 +4,7 @@ require_once "includes/header.php";
 
 $search = trim($_GET["search"] ?? "");
 $sql = "
-    SELECT id, customer_no, fullname, contact_no, facebook, address, notes, created_at
+    SELECT id, customer_no, fullname, contact_no, facebook, social_platform, social_link, address, notes, created_at
     FROM customers
     WHERE 1 = 1
 ";
@@ -54,7 +54,7 @@ $customers = $stmt->fetchAll();
             </form>
             <div class="customers-table-wrap">
                 <table class="customers-table">
-                    <thead><tr><th>Customer</th><th>Contact</th><th>Facebook</th><th>Address</th><th>Added</th></tr></thead>
+                    <thead><tr><th>Customer</th><th>Contact</th><th>Social</th><th>Address</th><th>Added</th></tr></thead>
                     <tbody>
                     <?php if (!$customers): ?>
                         <tr><td colspan="5" class="empty-state">No customer records found.</td></tr>
@@ -62,7 +62,7 @@ $customers = $stmt->fetchAll();
                         <tr>
                             <td><strong><?= htmlspecialchars($customer["fullname"]) ?></strong><small><?= htmlspecialchars($customer["customer_no"]) ?></small></td>
                             <td><?= htmlspecialchars($customer["contact_no"] ?: "-") ?></td>
-                            <td><?= htmlspecialchars($customer["facebook"] ?: "-") ?></td>
+                            <td><?php if ($customer["social_link"]): ?><a class="customer-social-link" href="<?= htmlspecialchars($customer["social_link"]) ?>" target="_blank" rel="noopener"><?= htmlspecialchars($customer["social_platform"] ?: "Social profile") ?></a><?php else: ?>-<?php endif; ?></td>
                             <td><?= htmlspecialchars($customer["address"] ?: "-") ?></td>
                             <td><?= htmlspecialchars(date("M d, Y", strtotime($customer["created_at"]))) ?></td>
                         </tr>

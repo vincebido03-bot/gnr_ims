@@ -39,7 +39,9 @@ document.addEventListener("DOMContentLoaded", function () {
 const productNames = {
 	1: "Barako Cowling",
 	2: "MDL Lights Cover",
-	3: "Bobber Tank-Cover"
+    3: "Bobber Tank-Cover",
+    4: "Front Fender",
+    5: "Engine Cowl"
 };
 
 const serviceNames = {
@@ -48,6 +50,85 @@ const serviceNames = {
 	3: "Design & Fabrication",
 	4: "Custom Modification"
 };
+
+document.addEventListener("DOMContentLoaded", function () {
+    const successModal = document.querySelector("[data-quote-success-modal]");
+
+    if (successModal) {
+        document.body.classList.add("quote-success-open");
+
+        function closeSuccessModal() {
+            successModal.classList.add("is-closing");
+            document.body.classList.remove("quote-success-open");
+            window.setTimeout(function () {
+                successModal.remove();
+            }, 180);
+        }
+
+        successModal.querySelectorAll("[data-quote-success-close]").forEach(function (control) {
+            control.addEventListener("click", closeSuccessModal);
+        });
+
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Escape" && document.body.contains(successModal)) closeSuccessModal();
+        });
+    }
+
+    const imageInput = document.getElementById("reference_images");
+    const selectedText = document.querySelector("[data-upload-selected]");
+    const preview = document.querySelector("[data-upload-preview]");
+    const socialPlatform = document.getElementById("social_platform");
+    const socialLink = document.getElementById("social_link");
+
+    if (!imageInput || !selectedText || !preview) {
+        if (!socialPlatform || !socialLink) return;
+    }
+
+    function updateSocialPlaceholder() {
+        if (!socialPlatform || !socialLink) return;
+
+        const placeholders = {
+            Facebook: "https://facebook.com/yourprofile",
+            Instagram: "https://instagram.com/yourprofile"
+        };
+
+        socialLink.placeholder = placeholders[socialPlatform.value] || "https://facebook.com/yourprofile";
+    }
+
+    if (socialPlatform && socialLink) {
+        socialPlatform.addEventListener("change", updateSocialPlaceholder);
+        updateSocialPlaceholder();
+    }
+
+    if (!imageInput || !selectedText || !preview) return;
+
+    imageInput.addEventListener("change", function () {
+        preview.innerHTML = "";
+
+        if (!imageInput.files.length) {
+            selectedText.textContent = "No images selected yet.";
+            return;
+        }
+
+        const fileCount = imageInput.files.length;
+        selectedText.textContent = fileCount + (fileCount === 1 ? " image selected" : " images selected");
+
+        Array.from(imageInput.files).forEach(function (file) {
+            const item = document.createElement("div");
+            item.className = "quote-upload-preview-item";
+
+            const image = document.createElement("img");
+            image.alt = file.name;
+            image.src = URL.createObjectURL(file);
+
+            const name = document.createElement("span");
+            name.textContent = file.name;
+
+            item.append(image, name);
+            preview.appendChild(item);
+        });
+    });
+});
 
 function selectProduct(productId) {
 	const serviceType = document.getElementById("service_type");

@@ -1,0 +1,202 @@
+.form-page {
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.form-card {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    background: #151515;
+    padding: 28px;
+}
+
+.form-card-header {
+    padding-bottom: 22px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    margin-bottom: 24px;
+}
+
+.form-card-header span {
+    display: block;
+    margin-bottom: 7px;
+    color: #c9a45c;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.8px;
+}
+
+.form-card-header h2 {
+    margin: 0;
+    color: #fff;
+    font-size: 24px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #d7d7d7;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    min-height: 44px;
+    box-sizing: border-box;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 9px;
+    padding: 0 13px;
+    background: #202020;
+    color: #f5f5f5;
+    font: inherit;
+    font-size: 13px;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    border-color: #c9a45c;
+    outline: none;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding-top: 8px;
+}
+
+.save-btn {
+    min-height: 40px;
+    box-sizing: border-box;
+    border: 1px solid #c9a45c;
+    border-radius: 8px;
+    padding: 0 15px;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.save-btn {
+    background: #c9a45c;
+    color: #151515;
+    cursor: pointer;
+}
+
+.form-message {
+    margin-bottom: 18px;
+    border-radius: 9px;
+    padding: 13px 15px;
+    font-size: 13px;
+}
+
+.form-message.error {
+    border: 1px solid rgba(220, 100, 95, 0.35);
+    background: rgba(220, 100, 95, 0.1);
+    color: #ff9c96;
+}
+
+.form-message.success {
+    border: 1px solid rgba(111, 190, 129, 0.35);
+    background: rgba(111, 190, 129, 0.1);
+    color: #8ee0a8;
+}
+
+.empty-form {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-height: 110px;
+    border: 1px dashed rgba(201, 164, 92, 0.35);
+    border-radius: 10px;
+    padding: 20px;
+    background: rgba(201, 164, 92, 0.04);
+    color: #d8d8d8;
+}
+
+.empty-form > div {
+    color: #c9a45c;
+    font-size: 25px;
+}
+
+.empty-form h3,
+.empty-form p {
+    display: block;
+}
+
+.empty-form h3 {
+    margin: 0 0 5px;
+    color: #fff;
+    font-size: 14px;
+}
+
+.empty-form p {
+    margin: 0;
+    color: #999;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.no-employees {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-height: 110px;
+    border: 1px dashed rgba(201, 164, 92, 0.35);
+    border-radius: 10px;
+    padding: 20px;
+    background: rgba(201, 164, 92, 0.04);
+    color: #d8d8d8;
+}
+
+.no-employees-icon {
+    color: #c9a45c;
+    font-size: 25px;
+}
+
+.no-employees strong,
+.no-employees p {
+    display: block;
+}
+
+.no-employees strong {
+    margin-bottom: 5px;
+    color: #fff;
+    font-size: 14px;
+}
+
+.no-employees p {
+    margin: 0;
+    color: #999;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+@media (max-width: 700px) {
+    .form-page {
+        max-width: none;
+    }
+
+    .form-card {
+        padding: 20px 16px;
+    }
+
+    .form-actions {
+        justify-content: stretch;
+        flex-direction: column;
+    }
+
+    .save-btn {
+        width: 100%;
+    }
+
+    .empty-form {
+        align-items: flex-start;
+    }
+}

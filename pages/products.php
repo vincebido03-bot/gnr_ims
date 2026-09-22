@@ -233,6 +233,38 @@
 
                 </article>
 
+                <article class="product-card" data-product-id="4" data-product-price="PHP 1,590">
+                    <div class="product-image">
+                        <img class="product-image-asset" src="assets/images/gnrrearfender.png" alt="Front Fender for scrambler and tracker motorcycles">
+                        <div class="product-category">HANDCRAFTED WITH FIBERGLASS</div>
+                    </div>
+                    <div class="product-content">
+                        <span class="product-number">04</span>
+                        <h3>FRONT FENDER</h3>
+                        <p>A clean, purposeful front fender designed for scrambler and tracker builds.</p>
+                        <div class="product-footer">
+                            <span class="product-price">PHP 1,590</span>
+                            <button type="button" class="product-buy-button" onclick="selectProduct(4)">BUY <span>&#8599;</span></button>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="product-card" data-product-id="5" data-product-price="PHP 4,309">
+                    <div class="product-image">
+                        <img class="product-image-asset" src="assets/images/gnrengcowling.png" alt="Engine Cowl for Keeway CR152 Version 2">
+                        <div class="product-category">HANDCRAFTED WITH FIBERGLASS</div>
+                    </div>
+                    <div class="product-content">
+                        <span class="product-number">05</span>
+                        <h3>ENGINE COWL</h3>
+                        <p>A refined protective cover shaped for the Keeway CR152 Version 2.</p>
+                        <div class="product-footer">
+                            <span class="product-price">PHP 4,309</span>
+                            <button type="button" class="product-buy-button" onclick="selectProduct(5)">BUY <span>&#8599;</span></button>
+                        </div>
+                    </div>
+                </article>
+
             </div>
 
 
@@ -260,6 +292,9 @@
                     data-slide="1"
                     aria-label="Go to product 2"
                 ></button>
+
+                <button type="button" class="products-dot" data-slide="3" aria-label="Go to product 4"></button>
+                <button type="button" class="products-dot" data-slide="4" aria-label="Go to product 5"></button>
 
                 <button
                     type="button"
@@ -346,7 +381,7 @@
 
             <div class="product-modal-footer">
 
-                <span class="product-modal-price">
+                <span class="product-modal-price" id="productModalPrice">
                     CUSTOM QUOTE
                 </span>
 
