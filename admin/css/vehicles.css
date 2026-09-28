@@ -6,20 +6,35 @@
 .vehicle-action-message { margin-bottom: 18px; border-radius: 9px; padding: 13px 15px; font-size: 13px; }
 .vehicle-action-message.success { border: 1px solid rgba(111,190,129,.35); background: rgba(111,190,129,.1); color: #8ee0a8; }
 .vehicle-action-message.error { border: 1px solid rgba(220,100,95,.35); background: rgba(220,100,95,.1); color: #ff9c96; }
+.vehicle-action-panel { background: #151515; border: 1px solid rgba(255,255,255,.08); border-radius: 14px; padding: 20px; margin-bottom: 20px; }
+.vehicle-panel-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
+.vehicle-panel-header h3 { margin: 0; color: #fff; }
+.vehicle-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.vehicle-form-field { display: flex; flex-direction: column; gap: 7px; }
+.vehicle-form-field-wide { grid-column: 1 / -1; }
+.vehicle-form-field label { color: #d1d1d1; font-size: 12px; font-weight: 600; }
+.vehicle-form-field input, .vehicle-form-field select, .vehicle-form-field textarea { border: 1px solid rgba(255,255,255,.12); border-radius: 9px; padding: 12px 13px; background: #202020; color: #f5f5f5; font: inherit; }
+.vehicle-form-field input[readonly] { border-color: rgba(201,164,92,.35); color: #e2c275; }
+.vehicle-form-field textarea { min-height: 90px; resize: vertical; }
+.vehicle-form-actions { margin-top: 18px; }
+.primary-button, .secondary-button, .small-action-button, .archive-vehicle-button { display: inline-flex; align-items: center; justify-content: center; min-height: 38px; border-radius: 9px; padding: 0 14px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none; }
+.primary-button { border: 1px solid #c9a45c; background: #c9a45c; color: #151515; }
+.secondary-button, .small-action-button.secondary { border: 1px solid rgba(255,255,255,.12); background: transparent; color: #d7d7d7; }
 .vehicles-filters { display: grid; grid-template-columns: minmax(220px, 1fr) auto auto; gap: 10px; margin-bottom: 20px; }
 .vehicles-filters input, .vehicles-filters button, .vehicles-filters a { min-height: 42px; box-sizing: border-box; border: 1px solid rgba(255,255,255,.1); border-radius: 9px; padding: 0 13px; font: inherit; font-size: 13px; }
 .vehicles-filters input { background: #202020; color: #f5f5f5; }
 .vehicles-filters button { border-color: #c9a45c; background: #c9a45c; color: #151515; font-weight: 700; cursor: pointer; }
 .vehicles-filters a { display: inline-flex; align-items: center; justify-content: center; color: #cfcfcf; text-decoration: none; }
 .vehicles-table-wrap { overflow-x: auto; border: 1px solid rgba(255,255,255,.08); border-radius: 14px; background: #151515; }
-.vehicles-table { width: 100%; min-width: 950px; border-collapse: collapse; }
+.vehicles-table { width: 100%; min-width: 1020px; border-collapse: collapse; }
 .vehicles-table th, .vehicles-table td { padding: 16px 18px; border-bottom: 1px solid rgba(255,255,255,.07); color: #d8d8d8; text-align: left; font-size: 13px; }
 .vehicles-table th { color: #9b9b9b; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; }
 .vehicles-table td strong, .vehicles-table td small { display: block; }
 .vehicles-table td strong { margin-bottom: 4px; color: #fff; }
 .vehicles-table td small { color: #8d8d8d; font-size: 11px; }
+.vehicle-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.vehicle-actions form { margin: 0; }
+.archive-vehicle-button { border: 1px solid rgba(220,100,95,.4); background: rgba(220,100,95,.14); color: #ff9c96; }
 .vehicles-table tr:last-child td { border-bottom: 0; }
-.archive-vehicle-button { border: 1px solid rgba(220,100,95,.4); border-radius: 7px; padding: 7px 10px; background: rgba(220,100,95,.1); color: #ff9c96; cursor: pointer; font: inherit; font-size: 11px; font-weight: 700; }
-.archive-vehicle-button:hover { background: rgba(220,100,95,.2); }
 .empty-state { padding: 42px !important; color: #929292 !important; text-align: center !important; }
-@media (max-width: 850px) { .vehicles-content { padding: 20px 16px; } .vehicles-filters { grid-template-columns: 1fr 1fr; } .vehicles-filters input { grid-column: 1 / -1; } }
+@media (max-width: 850px) { .vehicles-content { padding: 20px 16px; } .vehicles-filters { grid-template-columns: 1fr 1fr; } .vehicles-filters input { grid-column: 1 / -1; } .vehicle-form-grid { grid-template-columns: 1fr; } .vehicle-panel-header { flex-direction: column; align-items: flex-start; } }

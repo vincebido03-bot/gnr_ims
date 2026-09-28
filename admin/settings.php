@@ -58,7 +58,7 @@ $permissionCount = (int) $pdo->query("SELECT COUNT(*) FROM permissions")->fetchC
                         <div><strong><?= number_format($activeUserCount) ?></strong><span>Active users</span></div>
                         <div><strong><?= number_format($permissionCount) ?></strong><span>Permissions</span></div>
                     </div>
-                    <div class="settings-actions"><a href="employees.php">Manage employees</a><a href="create-user.php">Manage user accounts</a></div>
+                    <div class="settings-actions"><?php if (hasPermission("employees", "view")): ?><a href="employees.php">Manage employees</a><?php endif; ?><?php if (hasPermission("employees", "create")): ?><a href="create-user.php">Create employee account</a><?php endif; ?><?php if (hasRole("SUPER ADMIN")): ?><a href="create-admin.php">Add admin account</a><a href="role-permissions.php">Manage roles &amp; permissions</a><?php endif; ?></div>
                 </article>
             </div>
         </section>

@@ -1,0 +1,19 @@
+.admin-account-content { padding-top: 20px; }
+.admin-account-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 0px 20px; }
+.admin-account-form-grid .form-group small { display: block; margin-top: 7px; color: #999; font-size: 11px; }
+.admin-account-form-grid select { appearance: none; padding-right: 40px; cursor: pointer; }
+.admin-account-form-grid .form-group:has(select) { position: relative; }
+.admin-account-form-grid .form-group:has(select)::after { position: absolute; top: 40px; right: 17px; width: 8px; height: 8px; border-right: 2px solid #c9a45c; border-bottom: 2px solid #c9a45c; content: ""; pointer-events: none; transform: rotate(45deg); }
+.admin-account-form-grid select option { background: #202020; color: #f5f5f5; }
+.admin-account-form-grid select:focus { box-shadow: 0 0 0 3px rgba(201,164,92,.1); }
+.admin-account-list { margin-top: 20px; border: 1px solid rgba(255,255,255,.08); border-radius: 8px; padding: 20px; background: #151515; }
+.admin-account-list-heading { margin-bottom: 15px; }
+.admin-account-list-heading span { color: #c9a45c; font-size: 10px; font-weight: 700; letter-spacing: 1px; }
+.admin-account-list-heading h2 { margin: 4px 0px 0px; color: #fff; font-size: 17px; }
+.admin-account-table-wrap { overflow-x: auto; }
+.admin-account-table { width: 100%; border-collapse: collapse; }
+.admin-account-table th, .admin-account-table td { padding: 11px 12px; border-bottom: 1px solid rgba(255,255,255,.07); color: #ccc; font-size: 12px; text-align: left; white-space: nowrap; }
+.admin-account-table th { color: #999; font-size: 10px; text-transform: uppercase; }
+.admin-account-table td:first-child { color: #fff; font-weight: 700; }
+.admin-account-table tr:last-child td { border-bottom: 0px; }
+@media (max-width: 700px) { .admin-account-form-grid { grid-template-columns: 1fr; } .admin-account-list { padding: 14px; } }

@@ -5,6 +5,75 @@ require_once "includes/header.php";
 $inquiryActionMessage = "";
 $inquiryActionType = "";
 
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["create_inquiry"])) {
+    $customerId = (int) ($_POST["customer_id"] ?? 0);
+    $vehicleId = isset($_POST["vehicle_id"]) && $_POST["vehicle_id"] !== "" ? (int) $_POST["vehicle_id"] : null;
+    $inquiryType = trim((string) ($_POST["inquiry_type"] ?? ""));
+    $description = trim((string) ($_POST["description"] ?? ""));
+    $status = strtoupper(trim((string) ($_POST["status"] ?? "NEW")));
+
+    try {
+        if ($customerId <= 0) {
+            throw new RuntimeException("Please select a customer.");
+        }
+
+        $customerStmt = $pdo->prepare("SELECT id FROM customers WHERE id = ? LIMIT 1");
+        $customerStmt->execute([$customerId]);
+        if (!$customerStmt->fetchColumn()) {
+            throw new RuntimeException("Customer record not found.");
+        }
+
+        if ($vehicleId !== null) {
+            $vehicleStmt = $pdo->prepare("SELECT id FROM vehicles WHERE id = ? AND customer_id = ? LIMIT 1");
+            $vehicleStmt->execute([$vehicleId, $customerId]);
+            if (!$vehicleStmt->fetchColumn()) {
+                throw new RuntimeException("Selected vehicle does not belong to this customer.");
+            }
+        }
+
+        if ($inquiryType === "") {
+            throw new RuntimeException("Please provide the inquiry type.");
+        }
+
+        if ($description === "") {
+            throw new RuntimeException("Please describe the service request.");
+        }
+
+        $validStatuses = ["NEW", "CONTACTED", "ASSESSMENT", "QUOTATION_PREPARED", "QUOTATION_SENT", "FOLLOW_UP", "CONVERTED", "LOST", "CLOSED"];
+        if (!in_array($status, $validStatuses, true)) {
+            $status = "NEW";
+        }
+
+        do {
+            $inquiryNo = "INQ-" . date("YmdHis") . random_int(100, 999);
+            $checkStmt = $pdo->prepare("SELECT id FROM inquiries WHERE inquiry_no = ? LIMIT 1");
+            $checkStmt->execute([$inquiryNo]);
+            if (!$checkStmt->fetchColumn()) {
+                break;
+            }
+        } while (true);
+
+        $stmt = $pdo->prepare(
+            "INSERT INTO inquiries (inquiry_no, customer_id, vehicle_id, inquiry_type, description, status) VALUES (?, ?, ?, ?, ?, ?)"
+        );
+        $stmt->execute([$inquiryNo, $customerId, $vehicleId, $inquiryType, $description, $status]);
+
+        logAudit("INQUIRIES", "CREATE", "INQUIRY", (int) $pdo->lastInsertId(), null, [
+            "inquiry_no" => $inquiryNo,
+            "customer_id" => $customerId,
+            "vehicle_id" => $vehicleId,
+            "inquiry_type" => $inquiryType,
+            "status" => $status
+        ]);
+
+        $inquiryActionMessage = "Inquiry " . $inquiryNo . " was created successfully.";
+        $inquiryActionType = "success";
+    } catch (Throwable $exception) {
+        $inquiryActionMessage = $exception->getMessage();
+        $inquiryActionType = "error";
+    }
+}
+
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["archive_inquiry_id"])) {
     $inquiryId = (int) $_POST["archive_inquiry_id"];
 
@@ -72,11 +141,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["archive_inquiry_id"])
 $search = trim($_GET["search"] ?? "");
 $status = strtoupper(trim($_GET["status"] ?? ""));
 $statuses = ["NEW", "CONTACTED", "ASSESSMENT", "QUOTATION_PREPARED", "QUOTATION_SENT", "FOLLOW_UP", "CONVERTED", "LOST", "CLOSED"];
+$customerOptions = $pdo->query("SELECT id, customer_no, fullname FROM customers ORDER BY fullname ASC, customer_no ASC")->fetchAll();
+$vehicleOptions = $pdo->query("SELECT v.id, v.vehicle_no, v.brand, v.model, v.plate_no, c.fullname, c.customer_no FROM vehicles v INNER JOIN customers c ON c.id = v.customer_id ORDER BY c.fullname ASC, v.brand ASC, v.model ASC")->fetchAll();
 
 $sql = "
         SELECT i.id, i.inquiry_no, i.inquiry_type, i.description, i.status, i.created_at,
            c.customer_no, c.fullname,
-               CONCAT(v.brand, ' ', v.model) AS vehicle_name, v.plate_no,
+               v.vehicle_no, CONCAT(v.brand, ' ', v.model) AS vehicle_name, v.plate_no,
                COUNT(ia.id) AS attachment_count,
                GROUP_CONCAT(ia.stored_name SEPARATOR '|') AS attachment_files
     FROM inquiries i
@@ -139,6 +210,54 @@ function inquiryLabel($value)
                 <div><span>SALES PIPELINE</span><h2>Inquiry Register</h2></div>
                 <strong><?= number_format(count($inquiries)) ?> quer<?= count($inquiries) === 1 ? "y" : "ies" ?></strong>
             </div>
+            <?php if (hasPermission("inquiries", "create")): ?>
+            <div class="inquiry-action-panel">
+                <div class="inquiry-panel-header">
+                    <h3>Create New Inquiry</h3>
+                </div>
+                <form method="post" class="inquiry-form">
+                    <div class="inquiry-form-grid">
+                        <div class="inquiry-form-field">
+                            <label for="customer_id">Customer</label>
+                            <select id="customer_id" name="customer_id" required>
+                                <option value="">Select a customer</option>
+                                <?php foreach ($customerOptions as $customer): ?>
+                                    <option value="<?= (int) $customer["id"] ?>"><?= htmlspecialchars($customer["fullname"] . " (" . $customer["customer_no"] . ")") ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="inquiry-form-field">
+                            <label for="vehicle_id">Vehicle</label>
+                            <select id="vehicle_id" name="vehicle_id">
+                                <option value="">No vehicle linked</option>
+                                <?php foreach ($vehicleOptions as $vehicle): ?>
+                                    <option value="<?= (int) $vehicle["id"] ?>"><?= htmlspecialchars($vehicle["fullname"] . " - " . ($vehicle["vehicle_no"] ? $vehicle["vehicle_no"] . " - " : "") . ($vehicle["brand"] ?: "Unknown") . " " . ($vehicle["model"] ?: "") . ($vehicle["plate_no"] ? " (" . $vehicle["plate_no"] . ")" : "")) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="inquiry-form-field">
+                            <label for="inquiry_type">Inquiry Type</label>
+                            <input id="inquiry_type" name="inquiry_type" type="text" placeholder="Service / Repair / Install" required>
+                        </div>
+                        <div class="inquiry-form-field inquiry-form-field-wide">
+                            <label for="description">Request Details</label>
+                            <textarea id="description" name="description" rows="3" placeholder="Describe the service request" required></textarea>
+                        </div>
+                        <div class="inquiry-form-field">
+                            <label for="status">Status</label>
+                            <select id="status" name="status">
+                                <?php foreach ($statuses as $statusOption): ?>
+                                    <option value="<?= $statusOption ?>" <?= $statusOption === "NEW" ? "selected" : "" ?>><?= inquiryLabel($statusOption) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="inquiry-form-actions">
+                        <button type="submit" name="create_inquiry" class="primary-button">Create Inquiry</button>
+                    </div>
+                </form>
+            </div>
+            <?php endif; ?>
             <form class="inquiries-filters" method="get">
                 <input type="search" name="search" value="<?= htmlspecialchars($search) ?>" placeholder="Search inquiry, customer, or request">
                 <select name="status">
@@ -160,7 +279,7 @@ function inquiryLabel($value)
                         <tr>
                             <td><strong><?= htmlspecialchars($inquiry["inquiry_no"]) ?></strong><small><?= htmlspecialchars(date("M d, Y", strtotime($inquiry["created_at"]))) ?></small></td>
                             <td><strong><?= htmlspecialchars($inquiry["fullname"]) ?></strong><small><?= htmlspecialchars($inquiry["customer_no"]) ?></small></td>
-                            <td><?= htmlspecialchars(trim($inquiry["vehicle_name"] ?? "") ?: "-") ?><?php if ($inquiry["plate_no"]): ?><small><?= htmlspecialchars($inquiry["plate_no"]) ?></small><?php endif; ?></td>
+                            <td><?= htmlspecialchars(trim($inquiry["vehicle_name"] ?? "") ?: "-") ?><?php if ($inquiry["vehicle_no"]): ?><small><?= htmlspecialchars($inquiry["vehicle_no"]) ?></small><?php endif; ?><?php if ($inquiry["plate_no"]): ?><small><?= htmlspecialchars($inquiry["plate_no"]) ?></small><?php endif; ?></td>
                             <td><strong><?= htmlspecialchars($inquiry["inquiry_type"] ?: "General inquiry") ?></strong><small><?= htmlspecialchars($inquiry["description"] ?: "No description") ?></small></td>
                             <td>
                                 <?php if ((int) $inquiry["attachment_count"] > 0): ?>
@@ -174,10 +293,11 @@ function inquiryLabel($value)
                             <td><span class="inquiry-status <?= strtolower($inquiry["status"]) ?>"><?= htmlspecialchars(inquiryLabel($inquiry["status"])) ?></span></td>
                             <td><?= htmlspecialchars(date("M d, Y h:i A", strtotime($inquiry["created_at"]))) ?></td>
                             <td>
-                                <form method="post" onsubmit="return confirm('Move this inquiry to Archive?');">
+                                <?php if (hasPermission("inquiries", "delete")): ?><form method="post" onsubmit="return confirm('Move this inquiry to Archive?');">
                                     <input type="hidden" name="archive_inquiry_id" value="<?= (int) $inquiry["id"] ?>">
                                     <button type="submit" class="archive-inquiry-button">Archive</button>
                                 </form>
+                                <?php endif; ?>
                             </td>
                         </tr>
                     <?php endforeach; endif; ?>

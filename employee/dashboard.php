@@ -9,6 +9,8 @@ if (!hasRole("EMPLOYEE")) {
     exit;
 }
 
+requirePermission("dashboard", "view");
+
 $employeeId = $_SESSION["employee_id"] ?? null;
 $user = currentUser();
 
@@ -18,24 +20,28 @@ if (!$employeeId) {
 
 $stmt = $pdo->prepare("
     SELECT
-        id,
-        employee_no,
-        first_name,
-        middle_name,
-        last_name,
-        nickname,
-        position,
-        department,
-        hire_date,
-        daily_rate,
-        hourly_rate,
-        photo,
-        status
-    FROM employees
-    WHERE id = ?
+        e.id,
+        e.employee_no,
+        e.first_name,
+        e.middle_name,
+        e.last_name,
+        e.nickname,
+        e.position,
+        e.department,
+        e.hire_date,
+        e.daily_rate,
+        e.hourly_rate,
+        e.photo,
+        u.profile_picture,
+        e.status
+    FROM employees e
+    LEFT JOIN users u
+        ON u.employee_id = e.id
+       AND u.id = ?
+    WHERE e.id = ?
     LIMIT 1
 ");
-$stmt->execute([$employeeId]);
+$stmt->execute([$user["id"], $employeeId]);
 $employee = $stmt->fetch();
 
 if (!$employee) {
@@ -172,7 +178,13 @@ foreach ($recentLogs as $row) {
             </div>
 
             <div class="user-info">
-                <div class="user-avatar"><?= strtoupper(substr($displayName, 0, 1)) ?></div>
+                <div class="user-avatar">
+                    <?php if (!empty($employee["profile_picture"])): ?>
+                        <img src="../<?= htmlspecialchars($employee["profile_picture"], ENT_QUOTES, "UTF-8") ?>" alt="">
+                    <?php else: ?>
+                        <?= strtoupper(substr($displayName, 0, 1)) ?>
+                    <?php endif; ?>
+                </div>
                 <div>
                     <strong><?= htmlspecialchars($displayName) ?></strong>
                     <small>EMPLOYEE</small>
@@ -239,18 +251,24 @@ foreach ($recentLogs as $row) {
                 <div class="employee-card quick-access-card">
                     <h3>QUICK ACCESS</h3>
                     <div class="employee-links">
+                        <?php if (hasPermission("attendance", "view")): ?>
                         <a href="attendance.php" class="employee-link">
                             <strong>🕒 Attendance</strong>
                             <span>Time In and Time Out</span>
                         </a>
+                        <?php endif; ?>
+                        <?php if (hasPermission("payroll", "view")): ?>
                         <a href="payroll.php" class="employee-link">
                             <strong>💰 My Payslips</strong>
                             <span>View processed payslip records</span>
                         </a>
+                        <?php endif; ?>
+                        <?php if (hasPermission("employees", "view")): ?>
                         <a href="profile.php" class="employee-link">
                             <strong>👤 My Profile</strong>
                             <span>View your employee information</span>
                         </a>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>

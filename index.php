@@ -1,6 +1,7 @@
 ﻿<?php
 
 require_once __DIR__ . "/config/database.php";
+require_once __DIR__ . "/includes/numbering.php";
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -8,10 +9,183 @@ if (session_status() === PHP_SESSION_NONE) {
 
 $quoteMessage = $_SESSION["quote_message"] ?? "";
 $quoteMessageType = $_SESSION["quote_message_type"] ?? "";
+$productInquiryMessage = "";
+$productInquiryMessageType = "";
 unset($_SESSION["quote_message"], $_SESSION["quote_message_type"]);
 
 if (empty($_SESSION["quote_form_token"])) {
     $_SESSION["quote_form_token"] = bin2hex(random_bytes(32));
+}
+
+if (empty($_SESSION["product_inquiry_token"])) {
+    $_SESSION["product_inquiry_token"] = bin2hex(random_bytes(32));
+}
+
+if ($_SERVER["REQUEST_METHOD"] === "POST" && ($_POST["form-name"] ?? "") === "product_inquiry") {
+    $submittedToken = $_POST["product_inquiry_token"] ?? "";
+    $validToken = !empty($_SESSION["product_inquiry_token"])
+        && is_string($submittedToken)
+        && hash_equals($_SESSION["product_inquiry_token"], $submittedToken);
+
+    if (!$validToken) {
+        header("Location: index.php#products");
+        exit;
+    }
+
+    $customerName = trim((string) ($_POST["product_customer_name"] ?? ""));
+    $customerPhone = trim((string) ($_POST["product_customer_phone"] ?? ""));
+    $messengerLink = trim((string) ($_POST["product_messenger_link"] ?? ""));
+    $location = trim((string) ($_POST["product_location"] ?? ""));
+    $discoverySource = trim((string) ($_POST["discovery_source"] ?? ""));
+    $productName = trim((string) ($_POST["product_name"] ?? ""));
+    $quantityValue = trim((string) ($_POST["product_quantity"] ?? ""));
+    $shopeeChecked = trim((string) ($_POST["shopee_checked"] ?? ""));
+    $orderMethod = trim((string) ($_POST["order_method"] ?? ""));
+    $shippingMethod = trim((string) ($_POST["shipping_method"] ?? ""));
+    $orderTimeframe = trim((string) ($_POST["order_timeframe"] ?? ""));
+    $followUpDate = trim((string) ($_POST["follow_up_date"] ?? ""));
+    $productNotes = trim((string) ($_POST["product_notes"] ?? ""));
+    $customerNumberLockAcquired = false;
+    $storedAttachmentPath = null;
+
+    try {
+        $validSources = ["Facebook", "Instagram", "TikTok", "Shopee", "Friend / Referral", "Other"];
+        $validShopeeAnswers = ["Yes, I saw it there", "Not yet", "Not available in Shopee"];
+        $validOrderMethods = ["Direct from Grease & Resin (Gcash or Bank Transfer)", "Shopee Checkout", "Bulk Order / Distributor Inquiry"];
+        $validShippingMethods = ["Pick-up at HQ", "J&T Express", "Lalamove / Grab", "Other"];
+        $validOrderTimeframes = ["Today / within 24 hours", "Within this week", "Within this month", "Just canvassing for now"];
+
+        if ($customerName === "" || $location === "" || $productName === "" || strlen($productName) > 255) {
+            throw new RuntimeException("Complete your name, location, and product selection.");
+        }
+        if ($customerPhone === "" && $messengerLink === "") {
+            throw new RuntimeException("Provide a contact number or Messenger link.");
+        }
+        if ($customerPhone !== "" && !preg_match('/^[0-9+\-\s()]+$/', $customerPhone)) {
+            throw new RuntimeException("Please enter a valid contact number.");
+        }
+        if ($messengerLink !== "" && (!filter_var($messengerLink, FILTER_VALIDATE_URL) || !preg_match('/^https?:\/\//i', $messengerLink))) {
+            throw new RuntimeException("Please enter a valid Messenger link.");
+        }
+        if (!preg_match('/^[1-9][0-9]*$/', $quantityValue)) {
+            throw new RuntimeException("Quantity must be a whole number greater than zero.");
+        }
+        if (!in_array($discoverySource, $validSources, true) || !in_array($shopeeChecked, $validShopeeAnswers, true) || !in_array($orderMethod, $validOrderMethods, true) || ($shippingMethod !== "" && !in_array($shippingMethod, $validShippingMethods, true)) || !in_array($orderTimeframe, $validOrderTimeframes, true)) {
+            throw new RuntimeException("Select an option for each product inquiry field.");
+        }
+        if ($followUpDate !== "") {
+            $parsedFollowUpDate = DateTimeImmutable::createFromFormat("!Y-m-d", $followUpDate);
+            if (!$parsedFollowUpDate || $parsedFollowUpDate->format("Y-m-d") !== $followUpDate) {
+                throw new RuntimeException("Please enter a valid follow-up date.");
+            }
+        }
+
+        $pdo->beginTransaction();
+        if ($customerPhone !== "" && $messengerLink !== "") {
+            $customerStmt = $pdo->prepare("SELECT id FROM customers WHERE fullname = ? AND (contact_no = ? OR social_link = ?) LIMIT 1");
+            $customerStmt->execute([$customerName, $customerPhone, $messengerLink]);
+        } elseif ($customerPhone !== "") {
+            $customerStmt = $pdo->prepare("SELECT id FROM customers WHERE fullname = ? AND contact_no = ? LIMIT 1");
+            $customerStmt->execute([$customerName, $customerPhone]);
+        } else {
+            $customerStmt = $pdo->prepare("SELECT id FROM customers WHERE fullname = ? AND social_link = ? LIMIT 1");
+            $customerStmt->execute([$customerName, $messengerLink]);
+        }
+        $customerId = $customerStmt->fetchColumn();
+
+        if (!$customerId) {
+            $customerNumberLockName = "gnr_customer_numbers";
+            acquireNumberingLock($pdo, $customerNumberLockName);
+            $customerNumberLockAcquired = true;
+            $customerNo = nextCustomerNumber($pdo);
+            $customerStmt = $pdo->prepare("INSERT INTO customers (customer_no, fullname, contact_no, social_platform, social_link, address, notes) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            $customerStmt->execute([$customerNo, $customerName, $customerPhone !== "" ? $customerPhone : null, $messengerLink !== "" ? "Messenger" : null, $messengerLink !== "" ? $messengerLink : null, $location, "Product inquiry; source: " . $discoverySource]);
+            $customerId = (int) $pdo->lastInsertId();
+        } else {
+            $customerUpdate = $pdo->prepare("UPDATE customers SET contact_no = COALESCE(contact_no, ?), address = COALESCE(NULLIF(address, ''), ?), social_platform = CASE WHEN ? <> '' THEN 'Messenger' ELSE social_platform END, social_link = CASE WHEN ? <> '' THEN ? ELSE social_link END WHERE id = ?");
+            $customerUpdate->execute([$customerPhone !== "" ? $customerPhone : null, $location, $messengerLink, $messengerLink, $messengerLink, $customerId]);
+        }
+
+        $details = [
+            "Product: " . $productName,
+            "Quantity: " . (int) $quantityValue,
+            "Location / City: " . $location,
+            "Discovery source: " . $discoverySource,
+            "Shopee availability checked: " . $shopeeChecked,
+            "Intended order method: " . $orderMethod,
+            "Order timeframe: " . $orderTimeframe,
+        ];
+        if ($shippingMethod !== "") {
+            $details[] = "Preferred shipping: " . $shippingMethod;
+        }
+        if ($followUpDate !== "") {
+            $details[] = "Preferred follow-up date: " . $followUpDate;
+        }
+        if ($messengerLink !== "") {
+            $details[] = "Messenger link: " . $messengerLink;
+        }
+        if ($productNotes !== "") {
+            $details[] = "Additional notes: " . $productNotes;
+        }
+        $description = implode("\n", $details);
+
+        do {
+            $inquiryNo = "INQ-" . date("YmdHis") . random_int(100, 999);
+            $inquiryCheck = $pdo->prepare("SELECT id FROM inquiries WHERE inquiry_no = ? LIMIT 1");
+            $inquiryCheck->execute([$inquiryNo]);
+        } while ($inquiryCheck->fetchColumn());
+
+        $inquiryStmt = $pdo->prepare("INSERT INTO inquiries (inquiry_no, customer_id, vehicle_id, inquiry_type, description, status) VALUES (?, ?, NULL, 'PRODUCT_INQUIRY', ?, 'NEW')");
+        $inquiryStmt->execute([$inquiryNo, $customerId, $description]);
+        $inquiryId = (int) $pdo->lastInsertId();
+
+        $uploadedImage = $_FILES["product_reference_image"] ?? null;
+        if ($uploadedImage && $uploadedImage["error"] !== UPLOAD_ERR_NO_FILE) {
+            if ($uploadedImage["error"] !== UPLOAD_ERR_OK || (int) $uploadedImage["size"] > 5 * 1024 * 1024) {
+                throw new RuntimeException("The reference image must be a valid upload up to 5 MB.");
+            }
+            $fileInfo = new finfo(FILEINFO_MIME_TYPE);
+            $mimeType = $fileInfo->file($uploadedImage["tmp_name"]);
+            if (!in_array($mimeType, ["image/jpeg", "image/png", "image/webp"], true) || @getimagesize($uploadedImage["tmp_name"]) === false) {
+                throw new RuntimeException("Only valid JPG, PNG, or WEBP images are allowed.");
+            }
+            $uploadDirectory = __DIR__ . "/uploads/inquiries";
+            if (!is_dir($uploadDirectory) && !mkdir($uploadDirectory, 0755, true)) {
+                throw new RuntimeException("Unable to create upload directory.");
+            }
+            $extension = ["image/jpeg" => "jpg", "image/png" => "png", "image/webp" => "webp"][$mimeType];
+            $storedName = bin2hex(random_bytes(16)) . "." . $extension;
+            $storedAttachmentPath = $uploadDirectory . "/" . $storedName;
+            if (!move_uploaded_file($uploadedImage["tmp_name"], $storedAttachmentPath)) {
+                throw new RuntimeException("Unable to save the uploaded image.");
+            }
+            $attachmentStmt = $pdo->prepare("INSERT INTO inquiry_attachments (inquiry_id, original_name, stored_name, mime_type, file_size) VALUES (?, ?, ?, ?, ?)");
+            $attachmentStmt->execute([$inquiryId, basename($uploadedImage["name"]), $storedName, $mimeType, (int) $uploadedImage["size"]]);
+        }
+
+        $pdo->commit();
+        if ($customerNumberLockAcquired) {
+            releaseNumberingLock($pdo, $customerNumberLockName);
+            $customerNumberLockAcquired = false;
+        }
+        unset($_SESSION["product_inquiry_token"]);
+        $_SESSION["quote_message"] = "Product inquiry submitted. Reference: " . $inquiryNo;
+        $_SESSION["quote_message_type"] = "success";
+        header("Location: index.php#products");
+        exit;
+    } catch (Throwable $exception) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        if ($customerNumberLockAcquired) {
+            releaseNumberingLock($pdo, $customerNumberLockName);
+        }
+        if ($storedAttachmentPath && is_file($storedAttachmentPath)) {
+            unlink($storedAttachmentPath);
+        }
+        $productInquiryMessage = $exception->getMessage();
+        $productInquiryMessageType = "error";
+    }
 }
 
 if ($_SERVER["REQUEST_METHOD"] === "POST" && ($_POST["form-name"] ?? "") === "quote") {
@@ -41,8 +215,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && ($_POST["form-name"] ?? "") === "qu
     $projectDescription = trim($_POST["project_description"] ?? "");
     $preferredDate = trim($_POST["preferred_date"] ?? "");
     $budgetRange = trim($_POST["budget_range"] ?? "");
+    $validServiceTypes = ["custom_fiberglass", "bodywork", "custom_design", "restoration", "other"];
 
-    if ($customerName === "" || $customerPhone === "" || $serviceType === "" || $projectDescription === "") {
+    if ($customerName === "" || $customerPhone === "" || !in_array($serviceType, $validServiceTypes, true) || $projectDescription === "") {
         $quoteMessage = "Please complete the required customer and project fields.";
         $quoteMessageType = "error";
     } elseif ($customerEmail !== "" && !filter_var($customerEmail, FILTER_VALIDATE_EMAIL)) {
@@ -52,6 +227,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && ($_POST["form-name"] ?? "") === "qu
         $quoteMessage = "Please enter a valid Facebook or Instagram link.";
         $quoteMessageType = "error";
     } else {
+        $customerNumberLockAcquired = false;
+        $vehicleNumberLockAcquired = false;
         try {
             $pdo->beginTransaction();
 
@@ -60,7 +237,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && ($_POST["form-name"] ?? "") === "qu
             $customerId = $customerStmt->fetchColumn();
 
             if (!$customerId) {
-                $customerNo = "CUS-" . date("YmdHis") . random_int(10, 99);
+                $customerNumberLockName = "gnr_customer_numbers";
+                acquireNumberingLock($pdo, $customerNumberLockName);
+                $customerNumberLockAcquired = true;
+                $customerNo = nextCustomerNumber($pdo);
+
                 $customerStmt = $pdo->prepare("INSERT INTO customers (customer_no, fullname, contact_no, facebook, social_platform, social_link, notes) VALUES (?, ?, ?, ?, ?, ?, ?)");
                 $customerStmt->execute([$customerNo, $customerName, $customerPhone, $socialPlatform === "Facebook" ? $socialLink : null, $socialPlatform ?: null, $socialLink ?: null, $customerEmail !== "" ? "Email: " . $customerEmail : null]);
                 $customerId = $pdo->lastInsertId();
@@ -71,8 +252,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && ($_POST["form-name"] ?? "") === "qu
 
             $vehicleId = null;
             if ($brand !== "" || $model !== "" || $yearModel !== "" || $plateNo !== "" || $engineNo !== "" || $chassisNo !== "" || $color !== "") {
-                $vehicleStmt = $pdo->prepare("INSERT INTO vehicles (customer_id, brand, model, year_model, plate_no, engine_no, chassis_no, color) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-                $vehicleStmt->execute([$customerId, $brand ?: null, $model ?: null, $yearModel ?: null, $plateNo ?: null, $engineNo ?: null, $chassisNo ?: null, $color ?: null]);
+                $vehicleNumberLockName = "gnr_vehicle_numbers";
+                acquireNumberingLock($pdo, $vehicleNumberLockName);
+                $vehicleNumberLockAcquired = true;
+                $vehicleNo = nextVehicleNumber($pdo);
+                $vehicleStmt = $pdo->prepare("INSERT INTO vehicles (vehicle_no, customer_id, brand, model, year_model, plate_no, engine_no, chassis_no, color) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                $vehicleStmt->execute([$vehicleNo, $customerId, $brand ?: null, $model ?: null, $yearModel ?: null, $plateNo ?: null, $engineNo ?: null, $chassisNo ?: null, $color ?: null]);
                 $vehicleId = $pdo->lastInsertId();
             }
 
@@ -127,6 +312,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && ($_POST["form-name"] ?? "") === "qu
             }
 
             $pdo->commit();
+            if ($vehicleNumberLockAcquired) {
+                releaseNumberingLock($pdo, $vehicleNumberLockName);
+                $vehicleNumberLockAcquired = false;
+            }
+            if ($customerNumberLockAcquired) {
+                releaseNumberingLock($pdo, $customerNumberLockName);
+                $customerNumberLockAcquired = false;
+            }
             unset($_SESSION["quote_form_token"]);
             $_SESSION["quote_message"] = "Your inquiry has been submitted. Reference: " . $inquiryNo;
             $_SESSION["quote_message_type"] = "success";
@@ -135,6 +328,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && ($_POST["form-name"] ?? "") === "qu
         } catch (Throwable $exception) {
             if ($pdo->inTransaction()) {
                 $pdo->rollBack();
+            }
+            if ($vehicleNumberLockAcquired) {
+                releaseNumberingLock($pdo, $vehicleNumberLockName);
+            }
+            if ($customerNumberLockAcquired) {
+                releaseNumberingLock($pdo, $customerNumberLockName);
             }
             $quoteMessage = "We could not submit your inquiry right now. Please try again.";
             $quoteMessageType = "error";

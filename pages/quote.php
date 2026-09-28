@@ -470,10 +470,6 @@
                             Restoration
                         </option>
 
-                        <option value="product_purchase">
-                            Product Purchase
-                        </option>
-
                         <option value="other">
                             Other
                         </option>

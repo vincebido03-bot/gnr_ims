@@ -47,6 +47,7 @@ $roleStmt = $pdo->query("
         id,
         role_name
     FROM roles
+    WHERE UPPER(role_name) = 'EMPLOYEE'
     ORDER BY id ASC
 ");
 
@@ -64,6 +65,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $username = trim($_POST["username"] ?? "");
     $email = trim($_POST["email"] ?? "");
     $password = $_POST["password"] ?? "";
+    $employeeRoleCheck = $pdo->prepare("SELECT id FROM roles WHERE id = ? AND UPPER(role_name) = 'EMPLOYEE' LIMIT 1");
+    $employeeRoleCheck->execute([$roleId]);
+    $validEmployeeRoleId = $employeeRoleCheck->fetchColumn();
 
     if (
         !$employeeId ||
@@ -74,6 +78,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     ) {
 
         $error = "Please complete all required fields.";
+
+    } elseif (!$validEmployeeRoleId) {
+
+        $error = "Employee accounts must use the EMPLOYEE role. Create admin accounts from Add Admin.";
 
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
 

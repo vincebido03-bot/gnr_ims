@@ -9,6 +9,8 @@ if (!hasRole("EMPLOYEE")) {
     exit;
 }
 
+requirePermission("payroll", "view");
+
 $employeeId = $_SESSION["employee_id"] ?? null;
 
 if (!$employeeId) {

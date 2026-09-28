@@ -105,6 +105,7 @@
 
 .form-group input,
 .form-group textarea,
+.form-group select,
 .date-picker-input {
     box-sizing: border-box;
     width: 100%;
@@ -126,6 +127,38 @@
     height: 46px;
 }
 
+.form-group input:read-only {
+    border-color: rgba(201, 164, 92, 0.2);
+    background: #191919;
+    color: #aaaaaa;
+    cursor: default;
+}
+
+.form-group select {
+    height: 46px;
+    appearance: none;
+    padding-right: 42px;
+    cursor: pointer;
+}
+
+.form-group:has(select)::after {
+    position: absolute;
+    top: 39px;
+    right: 17px;
+    width: 8px;
+    height: 8px;
+    border-right: 2px solid #c9a45c;
+    border-bottom: 2px solid #c9a45c;
+    content: "";
+    pointer-events: none;
+    transform: rotate(45deg);
+}
+
+.form-group select option {
+    background: #202020;
+    color: #ffffff;
+}
+
 .form-group textarea {
     min-height: 82px;
     resize: vertical;
@@ -138,6 +171,7 @@
 
 .form-group input:focus,
 .form-group textarea:focus,
+.form-group select:focus,
 .date-picker-input:focus {
     border-color: #c9a45c;
     background: #242424;
@@ -626,6 +660,56 @@
     opacity: 0.7;
 }
 
+.employee-record-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin: 0;
+}
+
+.employee-record-grid > div {
+    min-width: 0;
+    border-bottom: 1px solid rgba(255,255,255,.07);
+    padding: 0 0 13px;
+}
+
+.employee-record-grid dt {
+    margin-bottom: 6px;
+    color: #888;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.employee-record-grid dd {
+    margin: 0;
+    color: #eee;
+    font-size: 13px;
+    overflow-wrap: anywhere;
+}
+
+.employee-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 9px;
+    margin-top: 18px;
+}
+
+.employee-form-actions .employee-save-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 38px;
+    padding: 0 14px;
+    border: 1px solid #c9a45c;
+    border-radius: 5px;
+    background: #c9a45c;
+    color: #151515;
+    font-size: 11px;
+    font-weight: 800;
+    text-decoration: none;
+}
+
 .suspend-btn {
     background: rgba(245, 158, 11, 0.10);
     border-color: rgba(245, 158, 11, 0.25);
@@ -695,6 +779,10 @@
 
     .form-group.full-width {
         grid-column: auto;
+    }
+
+    .employee-record-grid {
+        grid-template-columns: 1fr;
     }
 
 }

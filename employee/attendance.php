@@ -9,6 +9,8 @@ if (!hasRole("EMPLOYEE")) {
     exit;
 }
 
+requirePermission("attendance", "view");
+
 $employeeId = $_SESSION["employee_id"] ?? null;
 
 if (!$employeeId) {
@@ -22,18 +24,22 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $action = $_POST["attendance_action"] ?? "";
 
     if ($action === "time_in") {
+        requirePermission("attendance", "time_in");
         $result = employeeTimeIn($employeeId);
         $message = $result["message"] ?? "Unable to time in.";
         $messageType = $result["success"] ? "success" : "error";
     } elseif ($action === "time_out") {
+        requirePermission("attendance", "time_out");
         $result = employeeTimeOut($employeeId);
         $message = $result["message"] ?? "Unable to time out.";
         $messageType = $result["success"] ? "success" : "error";
     } elseif ($action === "start_break") {
+        requirePermission("attendance", "edit");
         $result = employeeStartBreak($employeeId);
         $message = $result["message"] ?? "Unable to start break.";
         $messageType = $result["success"] ? "success" : "error";
     } elseif ($action === "end_break") {
+        requirePermission("attendance", "edit");
         $result = employeeEndBreak($employeeId);
         $message = $result["message"] ?? "Unable to end break.";
         $messageType = $result["success"] ? "success" : "error";

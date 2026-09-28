@@ -59,7 +59,7 @@
 
             <div class="contact-visual">
                 <video class="contact-visual-video" autoplay muted loop playsinline poster="assets/images/hero.png" aria-label="Grease N' Resin workshop video">
-                    <source src="assets/videos/classimotor.mp4" type="video/mp4">
+                    <source src="assets/videos/gnrvid.mp4" type="video/mp4">
                 </video>
             </div>
 

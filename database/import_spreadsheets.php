@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . "/../config/database.php";
+require_once __DIR__ . "/../includes/numbering.php";
 
 function xlsxRows($filePath, $wantedSheet)
 {
@@ -125,7 +126,7 @@ function numberValue($value)
 }
 
 $base = dirname(__DIR__) . "/sheets_to_read/";
-$result = ["customers" => 0, "vehicles" => 0, "orders" => 0, "inventory" => 0, "movements" => 0, "labor" => 0];
+$result = ["customers" => 0, "vehicles" => 0, "orders" => 0, "job_details" => 0, "inventory" => 0, "movements" => 0, "labor" => 0];
 
 $customerRows = xlsxRows($base . "GNR JOB ORDER & SERVICE MANAGEMENT — 2026.xlsx", "CUSTOMERS AND BIKES");
 [$headerIndex, $columns] = headerRow($customerRows, ["Customer ID", "Customer Name", "Motorcycle ID"]);
@@ -135,6 +136,7 @@ if ($headerIndex !== null) {
         $sourceId = cell($row, $columns, "customer id");
         $name = cell($row, $columns, "customer name");
         if ($sourceId === "" || $name === "") continue;
+        $sourceVehicleNo = cell($row, $columns, "motorcycle id");
         $contact = cell($row, $columns, "contact");
         $facebook = cell($row, $columns, "fb/email");
         $stmt = $pdo->prepare("INSERT INTO customers (customer_no, fullname, contact_no, facebook, notes) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE fullname=VALUES(fullname), contact_no=VALUES(contact_no), facebook=VALUES(facebook)");
@@ -148,11 +150,24 @@ if ($headerIndex !== null) {
         $model = cell($row, $columns, "model");
         $plate = cell($row, $columns, "plate no.");
         if ($brand !== "" || $model !== "" || $plate !== "") {
-            $check = $pdo->prepare("SELECT id FROM vehicles WHERE customer_id = ? AND COALESCE(brand, '') = ? AND COALESCE(model, '') = ? LIMIT 1");
+            $check = $pdo->prepare("SELECT id, vehicle_no FROM vehicles WHERE customer_id = ? AND COALESCE(brand, '') = ? AND COALESCE(model, '') = ? LIMIT 1");
             $check->execute([$customerId, $brand, $model]);
-            if (!$check->fetchColumn()) {
-                $vehicle = $pdo->prepare("INSERT INTO vehicles (customer_id, brand, model, plate_no, notes) VALUES (?, ?, ?, ?, ?)");
-                $vehicle->execute([$customerId, $brand ?: null, $model ?: null, $plate ?: null, "Imported motorcycle record"]);
+            $existingVehicle = $check->fetch();
+            if ($existingVehicle) {
+                if ($sourceVehicleNo !== "" && empty($existingVehicle["vehicle_no"])) {
+                    $assignNumber = $pdo->prepare("UPDATE vehicles SET vehicle_no = ? WHERE id = ? AND vehicle_no IS NULL");
+                    $assignNumber->execute([$sourceVehicleNo, (int) $existingVehicle["id"]]);
+                }
+            } else {
+                $vehicleLockName = "gnr_vehicle_numbers";
+                acquireNumberingLock($pdo, $vehicleLockName);
+                try {
+                    $vehicleNo = $sourceVehicleNo !== "" ? $sourceVehicleNo : nextVehicleNumber($pdo);
+                    $vehicle = $pdo->prepare("INSERT INTO vehicles (vehicle_no, customer_id, brand, model, plate_no, notes) VALUES (?, ?, ?, ?, ?, ?)");
+                    $vehicle->execute([$vehicleNo, $customerId, $brand ?: null, $model ?: null, $plate ?: null, "Imported motorcycle record"]);
+                } finally {
+                    releaseNumberingLock($pdo, $vehicleLockName);
+                }
                 $result["vehicles"]++;
             }
         }
@@ -209,9 +224,16 @@ if ($headerIndex !== null) {
             }
             if (!$vehicleId) {
                 $parts = preg_split('/\s+/', $brandModel, 2);
-                $vehicleInsert = $pdo->prepare("INSERT INTO vehicles (customer_id, brand, model, notes) VALUES (?, ?, ?, ?)");
-                $vehicleInsert->execute([$customerId, $parts[0] ?? $brandModel, $parts[1] ?? null, "Created from imported order motorcycle details"]);
-                $vehicleId = $pdo->lastInsertId();
+                $vehicleLockName = "gnr_vehicle_numbers";
+                acquireNumberingLock($pdo, $vehicleLockName);
+                try {
+                    $vehicleNo = nextVehicleNumber($pdo);
+                    $vehicleInsert = $pdo->prepare("INSERT INTO vehicles (vehicle_no, customer_id, brand, model, notes) VALUES (?, ?, ?, ?, ?)");
+                    $vehicleInsert->execute([$vehicleNo, $customerId, $parts[0] ?? $brandModel, $parts[1] ?? null, "Created from imported order motorcycle details"]);
+                    $vehicleId = $pdo->lastInsertId();
+                } finally {
+                    releaseNumberingLock($pdo, $vehicleLockName);
+                }
             }
         }
 
@@ -256,6 +278,49 @@ if ($headerIndex !== null) {
                 $releaseStmt->execute(["REL-" . $orderNo, $orderId, $customerId, $vehicleId, $orderDate . " 00:00:00", $releaseStaff ?: null, $paymentStatus === "PAID" ? 1 : 0, strtoupper(cell($row, $columns, "qc status")) === "PASSED" ? 1 : 0, "Imported release record"]);
             }
         }
+    }
+}
+
+$jobDetailRows = xlsxRows($base . "GNR JOB ORDER & SERVICE MANAGEMENT — 2026.xlsx", "JOB DETAILS");
+[$jobDetailHeaderIndex, $jobDetailColumns] = headerRow($jobDetailRows, ["Job Detail ID", "Job Order ID", "Service Type", "Selling Price"]);
+if ($jobDetailHeaderIndex !== null) {
+    $jobDetailStmt = $pdo->prepare("INSERT INTO job_details (job_id, source_sheet_row, service_type, description, quantity, selling_price, labor_cost, raw_material_cost, consumable_cost, other_cost, assigned_staff_name, status, findings_notes, completion_date, customer_approved_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE service_type=VALUES(service_type), description=VALUES(description), quantity=VALUES(quantity), selling_price=VALUES(selling_price), labor_cost=VALUES(labor_cost), raw_material_cost=VALUES(raw_material_cost), consumable_cost=VALUES(consumable_cost), other_cost=VALUES(other_cost), assigned_staff_name=VALUES(assigned_staff_name), status=VALUES(status), findings_notes=VALUES(findings_notes), completion_date=VALUES(completion_date), customer_approved_price=VALUES(customer_approved_price)");
+    foreach (array_slice($jobDetailRows, $jobDetailHeaderIndex + 1) as $offset => $row) {
+        $sourceOrderNo = cell($row, $jobDetailColumns, "job order id");
+        $description = cell($row, $jobDetailColumns, "description");
+        if ($sourceOrderNo === "" || $description === "") {
+            continue;
+        }
+
+        $jobFind = $pdo->prepare("SELECT id FROM jobs WHERE job_no = ? LIMIT 1");
+        $jobFind->execute([$sourceOrderNo . "-JOB"]);
+        $jobId = $jobFind->fetchColumn();
+        if (!$jobId) {
+            continue;
+        }
+
+        $approvedPrice = cell($row, $jobDetailColumns, "customer approved price");
+        $sourceDetailStatus = strtoupper(cell($row, $jobDetailColumns, "status"));
+        $detailStatusMap = ["NOT STARTED" => "PENDING", "IN PROGRESS" => "IN_PROGRESS", "QC PASSED" => "QC_PASSED"];
+        $detailStatus = $detailStatusMap[$sourceDetailStatus] ?? ($sourceDetailStatus !== "" ? str_replace(" ", "_", $sourceDetailStatus) : "PENDING");
+        $jobDetailStmt->execute([
+            (int) $jobId,
+            $jobDetailHeaderIndex + 2 + $offset,
+            cell($row, $jobDetailColumns, "service type") ?: null,
+            $description,
+            numberValue(cell($row, $jobDetailColumns, "qty.")),
+            numberValue(cell($row, $jobDetailColumns, "selling price")),
+            numberValue(cell($row, $jobDetailColumns, "labor cost")),
+            numberValue(cell($row, $jobDetailColumns, "raw material cost")),
+            numberValue(cell($row, $jobDetailColumns, "consumable cost")),
+            numberValue(cell($row, $jobDetailColumns, "other cost")),
+            cell($row, $jobDetailColumns, "staff") ?: null,
+            $detailStatus ?: "PENDING",
+            cell($row, $jobDetailColumns, "findings/notes") ?: null,
+            excelDate(cell($row, $jobDetailColumns, "completion date")),
+            $approvedPrice !== "" ? numberValue($approvedPrice) : null,
+        ]);
+        $result["job_details"]++;
     }
 }
 

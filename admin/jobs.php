@@ -9,14 +9,20 @@ $statuses = ["PENDING", "SCHEDULED", "ASSIGNED", "IN_PROGRESS", "PAUSED", "FOR_Q
 $priorities = ["LOW", "NORMAL", "HIGH", "URGENT"];
 
 $sql = "
-        SELECT j.job_no, j.job_title, j.priority, j.status, j.scheduled_start, j.scheduled_end,
-            o.order_no, o.vehicle_id, c.customer_no, c.fullname,
-            CONCAT(v.brand, ' ', v.model) AS vehicle_name, v.plate_no,
+        SELECT j.id, j.job_no, j.job_title, j.priority, j.status, j.scheduled_start, j.scheduled_end,
+            o.order_no, o.vehicle_id, c.id AS customer_id, c.customer_no, c.fullname,
+            v.vehicle_no, CONCAT(v.brand, ' ', v.model) AS vehicle_name, v.plate_no,
+            COALESCE(detail_counts.detail_count, 0) AS detail_count,
             COALESCE(assigned.employee_names, NULLIF(j.assigned_staff_name, ''), 'Unassigned') AS employee_names
     FROM jobs j
     INNER JOIN orders o ON o.id = j.order_id
     INNER JOIN customers c ON c.id = o.customer_id
     LEFT JOIN vehicles v ON v.id = o.vehicle_id
+    LEFT JOIN (
+        SELECT job_id, COUNT(*) AS detail_count
+        FROM job_details
+        GROUP BY job_id
+    ) detail_counts ON detail_counts.job_id = j.id
     LEFT JOIN (
         SELECT ja.job_id,
                GROUP_CONCAT(CONCAT(e.first_name, ' ', e.last_name) ORDER BY e.last_name SEPARATOR ', ') AS employee_names
@@ -48,6 +54,14 @@ $sql .= " ORDER BY FIELD(j.priority, 'URGENT', 'HIGH', 'NORMAL', 'LOW'), j.sched
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $jobs = $stmt->fetchAll();
+$customerJobsStmt = $pdo->query("SELECT j.id, j.job_no, j.priority, j.scheduled_start, o.customer_id, o.order_no FROM jobs j INNER JOIN orders o ON o.id = j.order_id ORDER BY FIELD(j.priority, 'URGENT', 'HIGH', 'NORMAL', 'LOW'), j.scheduled_start IS NULL, j.scheduled_start ASC, j.job_no DESC");
+$customerJobsByCustomer = [];
+foreach ($customerJobsStmt->fetchAll() as $customerJob) {
+    $customerJobsByCustomer[$customerJob["customer_id"]][] = [
+        "id" => (int) $customerJob["id"],
+        "order_number" => $customerJob["order_no"],
+    ];
+}
 
 function jobLabel($value)
 {
@@ -63,7 +77,7 @@ function jobLabel($value)
     <title>GNR IMS - Jobs</title>
     <link rel="stylesheet" href="css/sidebar.css">
     <link rel="stylesheet" href="css/dashboard.css">
-    <link rel="stylesheet" href="css/jobs.css">
+    <link rel="stylesheet" href="css/jobs.css?v=20260929-customer-modal-controls">
 </head>
 <body>
 <div class="admin-layout">
@@ -90,19 +104,20 @@ function jobLabel($value)
             </form>
             <div class="jobs-table-wrap">
                 <table class="jobs-table">
-                    <thead><tr><th>Job</th><th>Customer / Order</th><th>Vehicle</th><th>Target Date</th><th>Assigned Staff</th><th>Priority</th><th>Status</th></tr></thead>
+                    <thead><tr><th>Job</th><th>Customer / Order</th><th>Vehicle</th><th>Target Date</th><th>Assigned Staff</th><th>Priority</th><th>Status</th><th>Details</th></tr></thead>
                     <tbody>
                     <?php if (!$jobs): ?>
-                        <tr><td colspan="7" class="empty-state">No job records found.</td></tr>
+                        <tr><td colspan="8" class="empty-state">No job records found.</td></tr>
                     <?php else: foreach ($jobs as $job): ?>
                         <tr>
                             <td><strong><?= htmlspecialchars($job["job_no"]) ?></strong><small><?= htmlspecialchars($job["job_title"]) ?></small></td>
                             <td><strong><?= htmlspecialchars($job["fullname"]) ?></strong><small><?= htmlspecialchars($job["customer_no"]) ?> · <?= htmlspecialchars($job["order_no"]) ?></small></td>
-                            <td><?= htmlspecialchars(trim($job["vehicle_name"] ?? "") ?: "Unit not recorded") ?><?php if ($job["plate_no"]): ?><small><?= htmlspecialchars($job["plate_no"]) ?></small><?php endif; ?></td>
+                            <td><?= htmlspecialchars(trim($job["vehicle_name"] ?? "") ?: "Unit not recorded") ?><?php if ($job["vehicle_no"]): ?><small><?= htmlspecialchars($job["vehicle_no"]) ?></small><?php endif; ?><?php if ($job["plate_no"]): ?><small><?= htmlspecialchars($job["plate_no"]) ?></small><?php endif; ?></td>
                             <td><?php $targetDate = $job["scheduled_end"] ?: $job["scheduled_start"]; ?><?= $targetDate ? htmlspecialchars(date("M d, Y", strtotime($targetDate))) : "Not scheduled" ?></td>
                             <td><?= htmlspecialchars($job["employee_names"]) ?></td>
                             <td><span class="job-priority <?= strtolower($job["priority"]) ?>"><?= htmlspecialchars(jobLabel($job["priority"])) ?></span></td>
                             <td><span class="job-status <?= strtolower($job["status"]) ?>"><?= htmlspecialchars(jobLabel($job["status"])) ?></span></td>
+                            <td><a class="job-detail-link" href="job-details.php?job_id=<?= (int) $job["id"] ?>" data-job-detail-open data-job-id="<?= (int) $job["id"] ?>" data-detail-count="<?= (int) $job["detail_count"] ?>" data-customer-jobs="<?= htmlspecialchars(json_encode($customerJobsByCustomer[$job["customer_id"]] ?? []), ENT_QUOTES, "UTF-8") ?>">Details <span><?= number_format((int) $job["detail_count"]) ?></span></a></td>
                         </tr>
                     <?php endforeach; endif; ?>
                     </tbody>
@@ -111,5 +126,21 @@ function jobLabel($value)
         </section>
     </main>
 </div>
+<div class="job-details-modal" id="jobDetailsModal" aria-hidden="true">
+    <button type="button" class="job-details-modal-backdrop" data-job-details-close aria-label="Close job details"></button>
+    <section class="job-details-modal-dialog" role="dialog" aria-modal="true" aria-label="Job Details">
+        <header class="job-details-modal-header">
+            <strong>Job Details</strong>
+            <nav class="job-details-modal-nav" aria-label="Selected customer's jobs">
+                <button type="button" id="jobDetailsPrevious" aria-label="Previous job" title="Previous job" disabled>&#10094;</button>
+                <span id="jobDetailsPosition"></span>
+                <button type="button" id="jobDetailsNext" aria-label="Next job" title="Next job" disabled>&#10095;</button>
+            </nav>
+            <button type="button" class="job-details-modal-close" data-job-details-close aria-label="Close job details" title="Close">&times;</button>
+        </header>
+        <iframe id="jobDetailsFrame" title="Selected job details" loading="eager"></iframe>
+    </section>
+</div>
+<script src="js/jobs.js?v=20260929-customer-modal-controls"></script>
 </body>
 </html>

@@ -239,6 +239,73 @@ function e($value)
 }
 
 
+function employeeJobDepartments()
+{
+    return [
+        "Fabricator" => "Fabricators",
+        "Painter" => "Painting",
+        "Mechanic" => "Mechanics",
+        "Frontdesk" => "Front Desk",
+        "HR" => "Human Resources",
+    ];
+}
+
+
+function storeUserProfilePicture($upload)
+{
+    if (!isset($upload["error"]) || $upload["error"] === UPLOAD_ERR_NO_FILE) {
+        return null;
+    }
+    if ($upload["error"] !== UPLOAD_ERR_OK || (int) ($upload["size"] ?? 0) > 5 * 1024 * 1024) {
+        throw new RuntimeException("Choose an image no larger than 5 MB.");
+    }
+    if (!is_uploaded_file($upload["tmp_name"] ?? "")) {
+        throw new RuntimeException("The uploaded image could not be verified.");
+    }
+
+    $image = @getimagesize($upload["tmp_name"]);
+    $mime = $image["mime"] ?? "";
+    $extensions = [
+        "image/jpeg" => "jpg",
+        "image/png" => "png",
+        "image/webp" => "webp",
+    ];
+    if (!$image || !isset($extensions[$mime]) || $image[0] > 6000 || $image[1] > 6000) {
+        throw new RuntimeException("Use a valid JPEG, PNG, or WebP image no larger than 6000 by 6000 pixels.");
+    }
+
+    $directory = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . "uploads" . DIRECTORY_SEPARATOR . "profiles";
+    if (!is_dir($directory) && !mkdir($directory, 0755, true) && !is_dir($directory)) {
+        throw new RuntimeException("The profile image folder could not be created.");
+    }
+
+    $fileName = bin2hex(random_bytes(16)) . "." . $extensions[$mime];
+    if (!move_uploaded_file($upload["tmp_name"], $directory . DIRECTORY_SEPARATOR . $fileName)) {
+        throw new RuntimeException("The profile image could not be saved.");
+    }
+
+    return "uploads/profiles/" . $fileName;
+}
+
+
+function removeUserProfilePicture($path)
+{
+    if (!is_string($path) || strpos($path, "uploads/profiles/") !== 0) {
+        return;
+    }
+
+    $fileName = basename($path);
+    if (!preg_match("/^[a-f0-9]{32}\\.(jpg|png|webp)$/", $fileName)) {
+        return;
+    }
+
+    $filePath = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . "uploads" . DIRECTORY_SEPARATOR . "profiles" . DIRECTORY_SEPARATOR . $fileName;
+    if (is_file($filePath)) {
+        unlink($filePath);
+    }
+}
+
+
 /* =========================================================
    ARCHIVE HELPERS
    ========================================================== */
@@ -283,7 +350,7 @@ function archiveRecord(
         )
     ]);
 
-    return true;
+    return (int) $pdo->lastInsertId();
 }
 
 

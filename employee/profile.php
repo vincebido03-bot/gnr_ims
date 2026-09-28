@@ -9,6 +9,8 @@ if (!hasRole("EMPLOYEE")) {
     exit;
 }
 
+requirePermission("employees", "view");
+
 $employeeId = $_SESSION["employee_id"] ?? null;
 
 if (!$employeeId) {
@@ -25,6 +27,7 @@ $stmt = $pdo->prepare("
         e.*,
         u.username,
         u.email,
+        u.profile_picture,
         u.status AS account_status
     FROM employees e
     LEFT JOIN users u
@@ -173,6 +176,7 @@ $initials = strtoupper(
 
             align-items: center;
             justify-content: center;
+            overflow: hidden;
 
             background: rgba(201,162,39,0.10);
 
@@ -186,6 +190,14 @@ $initials = strtoupper(
             font-weight: 800;
 
             letter-spacing: 1px;
+        }
+
+
+        .profile-avatar img {
+            width: 100%;
+            height: 100%;
+            border-radius: inherit;
+            object-fit: cover;
         }
 
 
@@ -444,7 +456,7 @@ $initials = strtoupper(
             </h1>
 
             <p>
-                View your employee and account information.
+                View your employee information and manage your account settings.
             </p>
 
         </div>
@@ -458,7 +470,11 @@ $initials = strtoupper(
             <section class="profile-card profile-identity">
 
                 <div class="profile-avatar">
-                    <?= e($initials) ?>
+                    <?php if (!empty($employee["profile_picture"])): ?>
+                        <img src="../<?= e($employee["profile_picture"]) ?>" alt="Profile picture">
+                    <?php else: ?>
+                        <?= e($initials) ?>
+                    <?php endif; ?>
                 </div>
 
 
@@ -730,8 +746,7 @@ $initials = strtoupper(
 
 
                     <div class="profile-note">
-                        Your employee information is managed by the GNR management system.
-                        Contact HR or an authorized administrator if any information needs to be updated.
+                        Update your personal and contact details in Account Settings. Hire date and pay rates are managed by HR.
                     </div>
 
                 </div>

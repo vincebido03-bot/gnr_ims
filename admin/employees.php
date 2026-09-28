@@ -13,6 +13,7 @@ if (isset($_SESSION["employee_success"])) {
 }
 
 $success = $message;
+$jobDepartments = employeeJobDepartments();
 
 
 /* =========================================================
@@ -24,7 +25,6 @@ if (
     isset($_POST["form_action"]) &&
     $_POST["form_action"] === "add_employee"
 ) {
-
     if (!hasPermission("employees", "create")) {
         http_response_code(403);
         die("Access Denied.");
@@ -42,7 +42,7 @@ if (
     $contactNo = trim($_POST["contact_no"] ?? "");
     $address = trim($_POST["address"] ?? "");
     $position = trim($_POST["position"] ?? "");
-    $department = trim($_POST["department"] ?? "");
+    $department = $jobDepartments[$position] ?? null;
     $hireDate = trim($_POST["hire_date"] ?? "");
     $dailyRate = trim($_POST["daily_rate"] ?? "");
     $hourlyRate = trim($_POST["hourly_rate"] ?? "");
@@ -64,11 +64,12 @@ if (
 
     if (
         $firstName === "" ||
+        $middleName === "" ||
         $lastName === "" ||
-        $position === "" ||
-        $department === "" ||
-        $hireDate === "" ||
-        $dailyRate === "" ||
+        $nickname === "" ||
+        $contactNo === "" ||
+        !array_key_exists($position, $jobDepartments) ||
+        ($dailyRate === "" && $hourlyRate === "") ||
         $username === "" ||
         $email === "" ||
         $password === "" ||
@@ -77,7 +78,7 @@ if (
 
         $error = "Please complete all required fields.";
 
-    } elseif (!is_numeric($dailyRate) || (float) $dailyRate < 0) {
+    } elseif ($dailyRate !== "" && (!is_numeric($dailyRate) || (float) $dailyRate < 0)) {
 
         $error = "Please enter a valid daily rate.";
 
@@ -89,6 +90,7 @@ if (
         $error = "Please enter a valid hourly rate.";
 
     } elseif (
+        $hireDate !== "" &&
         !preg_match(
             "/^\d{4}-\d{2}-\d{2}$/",
             $hireDate
@@ -143,7 +145,6 @@ if (
                 );
 
             }
-
 
             /* =================================================
                CHECK USERNAME
@@ -267,10 +268,10 @@ if (
                 $nickname !== "" ? $nickname : null,
                 $contactNo !== "" ? $contactNo : null,
                 $address !== "" ? $address : null,
-                $position,
+                $position !== "" ? $position : null,
                 $department,
-                $hireDate,
-                (float) $dailyRate,
+                $hireDate !== "" ? $hireDate : null,
+                $dailyRate !== "" ? (float) $dailyRate : null,
                 $hourlyRate !== ""
                     ? (float) $hourlyRate
                     : null
@@ -430,14 +431,15 @@ if (
     isset($_POST["employee_action"])
 ) {
 
-    if (!hasPermission("employees", "edit")) {
+    $action = $_POST["employee_action"] ?? "";
+    $requiredPermission = $action === "archive" ? "delete" : "edit";
+    if (!hasPermission("employees", $requiredPermission)) {
         http_response_code(403);
         die("Access Denied.");
     }
 
 
     $employeeId = (int) ($_POST["employee_id"] ?? 0);
-    $action = $_POST["employee_action"] ?? "";
 
 
     if ($employeeId > 0) {
@@ -489,6 +491,7 @@ if (
 
             if ($action === "suspend") {
 
+                $pdo->beginTransaction();
                 $update = $pdo->prepare("
                     UPDATE employees
                     SET status = 'SUSPENDED',
@@ -500,6 +503,9 @@ if (
                 $update->execute([
                     $employeeId
                 ]);
+
+                $accountSuspend = $pdo->prepare("UPDATE users SET status = 'SUSPENDED', updated_at = NOW() WHERE employee_id = ? AND status = 'ACTIVE'");
+                $accountSuspend->execute([$employeeId]);
 
 
                 logAudit(
@@ -521,6 +527,8 @@ if (
                     ]
                 );
 
+                $pdo->commit();
+
 
                 $_SESSION["employee_success"] =
                     "Employee suspended successfully.";
@@ -528,6 +536,19 @@ if (
                 header("Location: employees.php");
                 exit;
 
+            }
+
+            if ($action === "activate") {
+                $pdo->beginTransaction();
+                $update = $pdo->prepare("UPDATE employees SET status = 'ACTIVE', updated_at = NOW() WHERE id = ?");
+                $update->execute([$employeeId]);
+                $accountActivate = $pdo->prepare("UPDATE users SET status = 'ACTIVE', updated_at = NOW() WHERE employee_id = ? AND status = 'SUSPENDED'");
+                $accountActivate->execute([$employeeId]);
+                logAudit("EMPLOYEES", "ACTIVATE", "EMPLOYEE", $employeeId, ["status" => $employee["status"]], ["status" => "ACTIVE"]);
+                $pdo->commit();
+                $_SESSION["employee_success"] = "Employee reactivated successfully.";
+                header("Location: employees.php");
+                exit;
             }
 
 
@@ -548,13 +569,14 @@ if (
                 }
 
 
+                $pdo->beginTransaction();
                 $archiveId = archiveRecord(
                     "EMPLOYEES",
                     $employeeId,
                     $employee["employee_no"],
                     $fullName,
-                    "Deleted by admin",
                     $_SESSION["user_id"] ?? null,
+                    "Deleted by admin",
                     [
                         "employee_no" =>
                             $employee["employee_no"],
@@ -582,8 +604,7 @@ if (
                             $employee["hourly_rate"],
                         "status" =>
                             $employee["status"]
-                    ],
-                    "ARCHIVED"
+                    ]
                 );
 
 
@@ -598,6 +619,9 @@ if (
                 $update->execute([
                     $employeeId
                 ]);
+
+                $accountArchive = $pdo->prepare("UPDATE users SET status = 'INACTIVE', updated_at = NOW() WHERE employee_id = ?");
+                $accountArchive->execute([$employeeId]);
 
 
                 logAudit(
@@ -621,6 +645,8 @@ if (
                     ]
                 );
 
+                $pdo->commit();
+
 
                 $_SESSION["employee_success"] =
                     "Employee deleted and moved to Archive.";
@@ -635,7 +661,7 @@ if (
                DISABLE LOGIN ACCESS
                ================================================== */
 
-            if ($action === "disable_login_access") {
+            if (in_array($action, ["toggle_login_access", "disable_login_access"], true)) {
 
                 $userStmt = $pdo->prepare("
                     SELECT
@@ -672,15 +698,14 @@ if (
                     $userRecord["status"];
 
 
-                $update = $pdo->prepare("
-                    UPDATE users
-                    SET status = 'INACTIVE',
-                        updated_at = NOW()
-                    WHERE id = ?
-                ");
+                $newAccountStatus = $action === "disable_login_access"
+                    ? "INACTIVE"
+                    : ($oldStatus === "ACTIVE" ? "INACTIVE" : "ACTIVE");
+                $update = $pdo->prepare("UPDATE users SET status = ?, updated_at = NOW() WHERE id = ?");
 
 
                 $update->execute([
+                    $newAccountStatus,
                     $userRecord["id"]
                 ]);
 
@@ -700,7 +725,7 @@ if (
                     ],
                     [
                         "status" =>
-                            "INACTIVE",
+                            $newAccountStatus,
                         "employee_id" =>
                             $employeeId,
                         "username" =>
@@ -710,7 +735,7 @@ if (
 
 
                 $_SESSION["employee_success"] =
-                    "Employee login access disabled.";
+                    $newAccountStatus === "ACTIVE" ? "Employee login access enabled." : "Employee login access disabled.";
 
                 header("Location: employees.php");
                 exit;
@@ -737,22 +762,25 @@ if (
 
 $stmt = $pdo->query("
     SELECT
-        id,
-        employee_no,
-        first_name,
-        middle_name,
-        last_name,
-        nickname,
-        contact_no,
-        position,
-        department,
-        hire_date,
-        daily_rate,
-        hourly_rate,
-        status
-    FROM employees
-    WHERE status != 'ARCHIVED'
-    ORDER BY id DESC
+        e.id,
+        e.employee_no,
+        e.first_name,
+        e.middle_name,
+        e.last_name,
+        e.nickname,
+        e.contact_no,
+        e.position,
+        e.department,
+        e.hire_date,
+        e.daily_rate,
+        e.hourly_rate,
+        e.status,
+        u.id AS user_id,
+        u.status AS user_status
+    FROM employees e
+    LEFT JOIN users u ON u.employee_id = e.id
+    WHERE e.status != 'ARCHIVED'
+    ORDER BY e.id DESC
 ");
 
 
@@ -959,6 +987,7 @@ $employees = $stmt->fetchAll();
                                 id="middle_name"
                                 name="middle_name"
                                 autocomplete="additional-name"
+                                required
                             >
 
                         </div>
@@ -995,6 +1024,7 @@ $employees = $stmt->fetchAll();
                                 type="text"
                                 id="nickname"
                                 name="nickname"
+                                required
                             >
 
                         </div>
@@ -1013,6 +1043,7 @@ $employees = $stmt->fetchAll();
                                 id="contact_no"
                                 name="contact_no"
                                 autocomplete="tel"
+                                required
                             >
 
                         </div>
@@ -1036,37 +1067,32 @@ $employees = $stmt->fetchAll();
                         </div>
 
 
-                        <!-- POSITION -->
+                        <!-- JOB DESCRIPTION -->
 
                         <div class="form-group">
 
-                            <label for="position">
-                                Position
-                            </label>
-
-                            <input
-                                type="text"
-                                id="position"
-                                name="position"
-                                required
-                            >
+                            <label for="position">Job description</label>
+                            <select id="position" name="position" required>
+                                <option value="">Select when known</option>
+                                <?php foreach ($jobDepartments as $jobDescription => $jobDepartment): ?>
+                                    <option value="<?= htmlspecialchars($jobDescription) ?>" data-department="<?= htmlspecialchars($jobDepartment) ?>"><?= htmlspecialchars($jobDescription) ?></option>
+                                <?php endforeach; ?>
+                            </select>
 
                         </div>
 
 
-                        <!-- DEPARTMENT -->
+                        <!-- AUTO-ASSIGNED DEPARTMENT -->
 
                         <div class="form-group">
 
-                            <label for="department">
-                                Department
-                            </label>
-
+                            <label for="department">Department</label>
                             <input
                                 type="text"
                                 id="department"
                                 name="department"
-                                required
+                                placeholder="Auto-assigned from job description"
+                                readonly
                             >
 
                         </div>
@@ -1092,7 +1118,6 @@ $employees = $stmt->fetchAll();
                                     class="date-picker-input"
                                     placeholder="Select hire date"
                                     readonly
-                                    required
                                 >
 
 
@@ -1100,7 +1125,6 @@ $employees = $stmt->fetchAll();
                                     type="hidden"
                                     id="hire_date"
                                     name="hire_date"
-                                    required
                                 >
 
 
@@ -1272,7 +1296,6 @@ $employees = $stmt->fetchAll();
                                 step="0.01"
                                 min="0"
                                 placeholder="0.00"
-                                required
                             >
 
                         </div>
@@ -1315,19 +1338,17 @@ $employees = $stmt->fetchAll();
                             </span>
 
                             <h3>
-                                Employee Login Account
+                                Login Account
                             </h3>
 
                             <p>
-                                This employee will automatically receive
-                                an EMPLOYEE system account.
+                                This employee will receive an EMPLOYEE system account.
                             </p>
 
                         </div>
 
 
                         <div class="employee-form-grid">
-
 
                             <!-- USERNAME -->
 
@@ -1489,7 +1510,7 @@ $employees = $stmt->fetchAll();
                                 </th>
 
                                 <th>
-                                    Position
+                                    Job Description
                                 </th>
 
                                 <th>
@@ -1621,7 +1642,7 @@ $employees = $stmt->fetchAll();
 
 
                                             <a
-                                                href="#"
+                                                href="employee-record.php?id=<?= (int) $employee["id"] ?>"
                                                 class="employee-action-link"
                                                 aria-label="View employee"
                                                 title="View"
@@ -1630,16 +1651,8 @@ $employees = $stmt->fetchAll();
                                             </a>
 
 
-                                            <a
-                                                href="#"
-                                                class="employee-action-link muted"
-                                                aria-label="Edit employee"
-                                                title="Edit"
-                                            >
-                                                EDIT
-                                            </a>
-
-
+                                            <?php if (hasPermission("employees", "edit")): ?>
+                                            <a href="employee-record.php?id=<?= (int) $employee["id"] ?>&amp;edit=1" class="employee-action-link muted" aria-label="Edit employee" title="Edit">EDIT</a>
                                             <form
                                                 method="POST"
                                                 class="inline-action-form"
@@ -1654,23 +1667,25 @@ $employees = $stmt->fetchAll();
                                                 <input
                                                     type="hidden"
                                                     name="employee_action"
-                                                    value="suspend"
+                                                    value="<?= $employee["status"] === "ACTIVE" ? "suspend" : "activate" ?>"
                                                 >
 
                                                 <button
                                                     type="submit"
                                                     class="employee-action-btn suspend-btn"
                                                 >
-                                                    SUSPEND
+                                                    <?= $employee["status"] === "ACTIVE" ? "SUSPEND" : "REACTIVATE" ?>
                                                 </button>
 
                                             </form>
+                                            <?php endif; ?>
 
 
                                             <!-- =================================================
                                                  DELETE → ARCHIVE
                                                  ================================================== -->
 
+                                            <?php if (hasPermission("employees", "delete")): ?>
                                             <form
                                                 method="POST"
                                                 class="inline-action-form"
@@ -1697,12 +1712,16 @@ $employees = $stmt->fetchAll();
                                                 </button>
 
                                             </form>
+                                            <?php endif; ?>
 
 
                                             <!-- =================================================
                                                  DISABLE LOGIN ACCESS
                                                  ================================================== -->
 
+                                            <?php if (!empty($employee["user_id"]) && $employee["status"] !== "ACTIVE"): ?>
+                                                <button type="button" class="employee-action-btn account-btn" disabled>EMPLOYEE SUSPENDED</button>
+                                            <?php elseif (!empty($employee["user_id"]) && hasPermission("employees", "edit")): ?>
                                             <form
                                                 method="POST"
                                                 class="inline-action-form"
@@ -1717,17 +1736,20 @@ $employees = $stmt->fetchAll();
                                                 <input
                                                     type="hidden"
                                                     name="employee_action"
-                                                    value="disable_login_access"
+                                                    value="toggle_login_access"
                                                 >
 
                                                 <button
                                                     type="submit"
                                                     class="employee-action-btn account-btn"
                                                 >
-                                                    USER ACCOUNT
+                                                    <?= $employee["user_status"] === "ACTIVE" ? "DISABLE LOGIN" : "ENABLE LOGIN" ?>
                                                 </button>
 
                                             </form>
+                                            <?php elseif (empty($employee["user_id"]) && hasPermission("employees", "create")): ?>
+                                                <a class="employee-action-link account-btn" href="create-user.php">CREATE ACCOUNT</a>
+                                            <?php endif; ?>
 
 
                                         </div>
@@ -1785,6 +1807,46 @@ $employees = $stmt->fetchAll();
 
 </div>
 
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const jobDescription = document.getElementById("position");
+    const department = document.getElementById("department");
+    if (jobDescription && department) {
+        function updateDepartment() {
+            const selectedOption = jobDescription.selectedOptions[0];
+            department.value = selectedOption?.dataset.department || "";
+        }
+
+        jobDescription.addEventListener("change", updateDepartment);
+        updateDepartment();
+    }
+
+    const dailyRate = document.getElementById("daily_rate");
+    const hourlyRate = document.getElementById("hourly_rate");
+    const employeeForm = dailyRate?.form;
+    if (!dailyRate || !hourlyRate || !employeeForm) {
+        return;
+    }
+
+    function validatePayRate() {
+        const message = dailyRate.value || hourlyRate.value
+            ? ""
+            : "Enter at least a daily or hourly rate.";
+        dailyRate.setCustomValidity(message);
+        hourlyRate.setCustomValidity(message);
+    }
+
+    dailyRate.addEventListener("input", validatePayRate);
+    hourlyRate.addEventListener("input", validatePayRate);
+    employeeForm.addEventListener("submit", function (event) {
+        validatePayRate();
+        if (!employeeForm.checkValidity()) {
+            event.preventDefault();
+            employeeForm.reportValidity();
+        }
+    });
+});
+</script>
 <script src="js/admin.js"></script>
 
 </body>

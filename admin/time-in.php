@@ -480,6 +480,7 @@ if ($attendance && $break && empty($break["break_in"])) {
                             </div>
 
 
+                            <?php if (hasPermission("attendance", "time_out")): ?>
                             <form
                                 method="POST"
                                 style="margin-top:20px;"
@@ -500,6 +501,7 @@ if ($attendance && $break && empty($break["break_in"])) {
                                 </button>
 
                             </form>
+                            <?php endif; ?>
 
 
                         <?php else: ?>
@@ -526,6 +528,7 @@ if ($attendance && $break && empty($break["break_in"])) {
                         </p>
 
 
+                        <?php if (hasPermission("attendance", "time_in")): ?>
                         <form method="POST">
 
                             <input
@@ -543,6 +546,7 @@ if ($attendance && $break && empty($break["break_in"])) {
                             </button>
 
                         </form>
+                        <?php endif; ?>
 
 
                     <?php endif; ?>

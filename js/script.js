@@ -131,20 +131,77 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 function selectProduct(productId) {
-	const serviceType = document.getElementById("service_type");
-	const description = document.getElementById("project_description");
+	const productSelect = document.getElementById("product_name");
 	const productName = productNames[productId] || "Custom Product";
 
-	if (serviceType) {
-		serviceType.value = "product_purchase";
+	if (productSelect) {
+		productSelect.value = productName;
 	}
 
-	if (description && !description.value.trim()) {
-		description.value = "I am interested in the " + productName + ".";
-	}
-
-	document.getElementById("quote")?.scrollIntoView({ behavior: "smooth" });
+    openProductInquiryModal();
 }
+
+let previousProductInquiryFocus = null;
+
+function openProductInquiryModal() {
+    const modal = document.getElementById("productInquiryModal");
+    if (!modal) return;
+
+    if (!modal.classList.contains("active")) {
+        previousProductInquiryFocus = document.activeElement;
+    }
+    modal.classList.add("active");
+    modal.setAttribute("aria-hidden", "false");
+    document.body.classList.add("product-inquiry-open");
+    modal.querySelector(".product-inquiry-close")?.focus();
+}
+
+function closeProductInquiryModal() {
+    const modal = document.getElementById("productInquiryModal");
+    if (!modal) return;
+
+    modal.classList.remove("active");
+    modal.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("product-inquiry-open");
+    if (previousProductInquiryFocus instanceof HTMLElement) {
+        previousProductInquiryFocus.focus();
+    }
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    const modal = document.getElementById("productInquiryModal");
+    if (!modal) return;
+
+    modal.querySelectorAll("[data-product-inquiry-close]").forEach(function (control) {
+        control.addEventListener("click", closeProductInquiryModal);
+    });
+
+    document.addEventListener("keydown", function (event) {
+        if (!modal.classList.contains("active")) return;
+        if (event.key === "Escape") {
+            event.preventDefault();
+            closeProductInquiryModal();
+            return;
+        }
+        if (event.key !== "Tab") return;
+
+        const focusable = Array.from(modal.querySelectorAll('button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [href], [tabindex]:not([tabindex="-1"])'));
+        if (!focusable.length) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+            event.preventDefault();
+            last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+            event.preventDefault();
+            first.focus();
+        }
+    });
+
+    if (modal.dataset.open === "true") {
+        openProductInquiryModal();
+    }
+});
 
 function selectService(serviceId) {
 	const serviceType = document.getElementById("service_type");
